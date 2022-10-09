@@ -11,13 +11,16 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         .map(|| "Hello, World!")
         .or(filters::get()
             .and(filters::path("/test"))
-            .map(|| reply::html("<h1>Hello, World!</h1>")))
+            .map(reply::html("<h1>Hello, World!</h1>")))
         .or(|mut req: Request<Body>| async move {
             let bytes = req.text().await?;
 
             Result::Ok(format!("Hello: {:?}", bytes))
         })
-        .or(filters::method().then(|(req, (method,))| async move {
+        .or(filters::post()
+            .and(filters::text())
+            .map(|body| reply::text(format!("Hello: {}", body))))
+        .or(filters::method().and_then(|method| async move {
             //
             Result::Ok("And then this")
         }))

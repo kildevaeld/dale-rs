@@ -119,6 +119,14 @@ impl<S: ToString + Clone, B: Body> Service<Request<B>> for Html<S> {
     }
 }
 
+impl<S: Clone, A> dale::filters::Func<A> for Html<S> {
+    type Output = Self;
+
+    fn call(&self, _args: A) -> Self::Output {
+        self.clone()
+    }
+}
+
 impl<S: ToString, B: Body> Reply<B> for Html<S> {
     #[inline(always)]
     fn into_response(self) -> Response<B> {

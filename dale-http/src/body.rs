@@ -5,6 +5,12 @@ use futures_core::Stream;
 use http_body::Body as HttpBody;
 
 use crate::common::{ToBytes, ToText};
+#[cfg(feature = "json")]
+use crate::encoder::Json;
+#[cfg(feature = "serde")]
+use crate::encoder::{Decoder, ToDecoded};
+#[cfg(feature = "serde")]
+use serde::de::DeserializeOwned;
 
 pub trait Body: HttpBody + Sized {
     fn empty() -> Self;
@@ -25,6 +31,16 @@ pub trait BodyExt: Body {
 
     fn text(self) -> ToText<Self> {
         ToText::new(self)
+    }
+
+    #[cfg(feature = "serde")]
+    fn decode<D: Decoder, S: DeserializeOwned>(self) -> ToDecoded<D, S, Self> {
+        ToDecoded::new(self)
+    }
+
+    #[cfg(feature = "json")]
+    fn json<S: DeserializeOwned>(self) -> ToDecoded<Json, S, Self> {
+        self.decode()
     }
 }
 

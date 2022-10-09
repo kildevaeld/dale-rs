@@ -1,56 +1,66 @@
+use crate::{
+    body::BodyExt,
+    encoder::Decoder,
+    error::{Error, KnownError},
+    filters, Body,
+};
 use dale::{Outcome, Service, ServiceExt};
 use futures_core::Future;
 use http::Request;
 use serde::de::DeserializeOwned;
-use std::error::Error as StdError;
-use std::fmt;
+use std::{error::Error as StdError, fmt};
 
-use crate::encoder::{Decoder, Form};
-use crate::error::{Error, KnownError};
-use crate::{filters, Body};
-
-#[cfg(feature = "json")]
-pub fn json<T: DeserializeOwned + Send, B: Body + Send + 'static>(
-) -> impl Service<Request<B>, Future = impl Future + Send, Output = Outcome<T, Error, Request<B>>> + Copy
+pub fn decode<D: Decoder, S: DeserializeOwned, B>() -> impl Service<
+    Request<B>,
+    Future = impl Future + Send,
+    Output = Outcome<(Request<B>, (S,)), Error, Request<B>>,
+> + Copy
 where
-    B::Data: Send,
+    B: Body + Send + 'static,
     B::Error: Into<Error> + Send,
 {
-    is_content_type::<Form, B>()
-        .and(filters::aggregate())
-        .then(|(_, (buf,))| async move {
-            crate::encoder::Json::decode::<_, T>(buf).map_err(|err| {
-                tracing::debug!("request form body error: {}", err);
-                Error::new(BodyDeserializeError { cause: err.into() })
-            })
+    is_content_type::<D, B>()
+        .and(filters::body())
+        .and_then(|body: B| async move {
+            match body.decode::<D, S>().await {
+                Ok(ret) => Ok(ret),
+                Err(err) => {
+                    tracing::debug!("request decode body error: {}", err);
+                    Err(Error::new(BodyDeserializeError { cause: err.into() }))
+                }
+            }
         })
         .err_into()
 }
-// pub fn to_json<S: serde::Serialize + Send + 'static, B: Default + From<Vec<u8>> + Send>(
-// ) -> impl Service<(Request<B>, (S,)), Output = impl Reply<B>, Error = Error> + Copy {
-//     |(_, (data,))| async move { Ok(reply::json(data)) }
-// }
 
-pub fn form<T: DeserializeOwned + Send, B: Body + Send + 'static>(
-) -> impl Service<Request<B>, Future = impl Future + Send, Output = Outcome<T, Error, Request<B>>> + Copy
+#[cfg(feature = "json")]
+pub fn json<T: DeserializeOwned + Send, B: Body + Send + 'static>() -> impl Service<
+    Request<B>,
+    Future = impl Future + Send,
+    Output = Outcome<(Request<B>, (T,)), Error, Request<B>>,
+> + Copy
 where
     B::Data: Send,
     B::Error: Into<Error> + Send,
 {
-    is_content_type::<Form, B>()
-        .and(filters::aggregate())
-        .then(|(_, (buf,))| async move {
-            Form::decode::<_, T>(buf).map_err(|err| {
-                tracing::debug!("request form body error: {}", err);
-                Error::new(BodyDeserializeError { cause: err.into() })
-            })
-        })
-        .err_into()
+    decode::<crate::encoder::Json, T, B>()
+}
+
+pub fn form<T: DeserializeOwned + Send, B: Body + Send + 'static>() -> impl Service<
+    Request<B>,
+    Future = impl Future + Send,
+    Output = Outcome<(Request<B>, (T,)), Error, Request<B>>,
+> + Copy
+where
+    B::Data: Send,
+    B::Error: Into<Error> + Send,
+{
+    decode::<crate::encoder::Form, T, B>()
 }
 
 // Require the `content-type` header to be this type (or, if there's no `content-type`
 // header at all, optimistically hope it's the right type).
-fn is_content_type<D: Decoder, B: Body + Send + 'static>() -> impl Service<
+fn is_content_type<D: Decoder, B: Body + Send>() -> impl Service<
     Request<B>,
     Future = impl Future + Send,
     Output = Outcome<(Request<B>, ()), Error, Request<B>>,
@@ -98,8 +108,11 @@ pub fn _is_content_type<D: Decoder, B>(req: &Request<B>) -> Result<(), Error> {
 }
 
 #[cfg(feature = "json")]
-pub fn any_body<T: DeserializeOwned + Send + 'static, B: Body + Send + Default + 'static>(
-) -> impl Service<Request<B>, Future = impl Future + Send, Output = Outcome<T, Error, Request<B>>> + Clone
+pub fn any_body<T: DeserializeOwned + Send + 'static, B: Body + Send + 'static>() -> impl Service<
+    Request<B>,
+    Future = impl Future + Send,
+    Output = Outcome<(Request<B>, (T,)), Error, Request<B>>,
+> + Copy
 where
     B::Data: Send,
     B::Error: Into<Error> + Send + Sync,
@@ -132,18 +145,16 @@ impl fmt::Display for BodyDeserializeError {
 
 impl StdError for BodyDeserializeError {}
 
-// pub fn qs<S: DeserializeOwned + Send + 'static, B: Send + 'static>() -> impl Service<
-//     Request<B>,
-//     Output = (Request<B>, (Option<S>,)),
-//     Error = Error,
-//     Future = impl Future + Send,
-// > + Copy {
-//     |req: Request<B>| async move {
-//         let m = match serde_qs::from_str(req.uri().query().unwrap_or("")) {
-//             Ok(s) => Some(s),
-//             Err(e) => unimplemented!("qs fail: {}", e),
-//         };
-
-//         Ok((req, (m,)))
-//     }
-// }
+#[cfg(feature = "qs")]
+pub fn qs<S: DeserializeOwned + Send + 'static, B: Send + 'static>() -> impl Service<
+    Request<B>,
+    Future = impl Future + Send,
+    Output = Outcome<(Request<B>, (Option<S>,)), Error, Request<B>>,
+> + Copy {
+    |req: Request<B>| async move {
+        match serde_qs::from_str(req.uri().query().unwrap_or("")) {
+            Ok(s) => Outcome::Success((req, (Some(s),))),
+            Err(e) => unimplemented!("qs fail: {}", e),
+        }
+    }
+}

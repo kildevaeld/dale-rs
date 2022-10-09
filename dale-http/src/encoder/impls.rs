@@ -1,7 +1,6 @@
+use super::{Decoder, Encoder};
 use bytes::{Buf, Bytes};
 use serde::{de::DeserializeOwned, Serialize};
-
-use super::{Decoder, Encoder};
 
 pub struct Form;
 

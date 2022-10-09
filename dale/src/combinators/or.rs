@@ -23,6 +23,8 @@ impl<T1: Clone, T2: Clone, I> Clone for Or<T1, T2, I> {
     }
 }
 
+impl<T1: Copy, T2: Copy, I> Copy for Or<T1, T2, I> {}
+
 impl<T1, T2, I> Or<T1, T2, I> {
     pub fn new(left: T1, right: T2) -> Or<T1, T2, I> {
         Or {
