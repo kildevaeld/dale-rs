@@ -20,6 +20,14 @@ pub fn post<B: Send + 'static>() -> impl Service<
     method_is::<_, B>(|| &Method::POST)
 }
 
+pub fn head<B: Send + 'static>() -> impl Service<
+    Request<B>,
+    Output = Outcome<(Request<B>, ()), Error, Request<B>>,
+    Future = impl Future + Send,
+> + Copy {
+    method_is::<_, B>(|| &Method::HEAD)
+}
+
 pub fn put<B: Send + 'static>() -> impl Service<
     Request<B>,
     Output = Outcome<(Request<B>, ()), Error, Request<B>>,

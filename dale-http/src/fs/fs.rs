@@ -2,6 +2,7 @@ use super::file_conditional::file_conditional;
 use super::file_options::file_options;
 use crate::error::Error;
 use crate::filters;
+use crate::modifier::{Set, With};
 use crate::{modifier::Modifier, Body};
 use dale::filters::One;
 use dale::{Outcome, Service, ServiceExt};
@@ -10,9 +11,10 @@ use dale_runtime::fs::FS;
 use dale_runtime::Tokio;
 use futures_core::Future;
 use headers::Host;
-use http::{Request, Response};
+use http::{Method, Request, Response, StatusCode};
 
 pub use super::node::*;
+use std::fs::Metadata;
 use std::{fs::OpenOptions, path::PathBuf};
 
 pub fn root<B>(
@@ -63,10 +65,19 @@ where
     opts.read(true);
 
     dale_fs::FileSystem::<Tokio>::file(path, opts)
+        .and(filters::get().or(filters::head()).unify())
         .and(file_options())
-        .then(|(_, (node, meta, mime, options))| async move {
-            Result::<_, Error>::Ok(file_conditional(node, mime, meta, options)?)
-        })
+        .then(
+            |(req, (node, meta, mime, options)): (Request<B>, (_, Metadata, _, _))| async move {
+                if req.method() == Method::HEAD {
+                    return Ok(Response::with(StatusCode::NO_CONTENT)
+                        .set(headers::ContentType::from(mime))
+                        .set(headers::ContentLength(meta.len())));
+                }
+
+                Result::<_, Error>::Ok(file_conditional(node, mime, meta, options)?)
+            },
+        )
         .err_into()
 }
 
