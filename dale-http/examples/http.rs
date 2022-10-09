@@ -18,6 +18,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
             Result::Ok(format!("Hello: {:?}", bytes))
         })
         .or(filters::post()
+            .or(filters::put())
+            .unify()
             .and(filters::text())
             .map(|body| reply::text(format!("Hello: {}", body))))
         .or(filters::method().and_then(|method| async move {
