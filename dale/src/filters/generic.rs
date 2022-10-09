@@ -10,18 +10,32 @@ pub fn one<T>(val: T) -> One<T> {
 }
 
 pub trait Extract<R>: Sized {
-    type Extract: Tuple + Send;
+    type Extract: Tuple;
     fn unpack(self) -> (R, Self::Extract);
+}
+
+pub trait ExtractOne<R>: Extract<R> {
+    type Output;
+    fn unpack_one(self) -> (R, Self::Output);
 }
 
 impl<R, U> Extract<R> for (R, U)
 where
-    U: Tuple + Send,
+    U: Tuple,
 {
     type Extract = U;
     #[inline(always)]
     fn unpack(self) -> (R, Self::Extract) {
         self
+    }
+}
+
+impl<R, U> ExtractOne<R> for (R, One<U>) {
+    type Output = U;
+
+    fn unpack_one(self) -> (R, Self::Output) {
+        let (req, (out,)) = self.unpack();
+        (req, out)
     }
 }
 

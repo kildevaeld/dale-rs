@@ -1,8 +1,8 @@
 #[cfg(feature = "alloc")]
 use crate::boxed::{Box, BoxService, BoxedService, LocalBoxService, LocalBoxedService};
 use crate::{
-    combinators::{ErrInto, MapErr, Or, Then, Unify},
-    filters::{And, AndThen, Combine, Extract, Func, Map, Tuple},
+    combinators::{ErrInto, MapErr, Or, Then, Unify, Unpack, UnpackOne},
+    filters::{And, AndThen, Combine, Extract, ExtractOne, Func, Map, Tuple},
     into_outcome::IntoOutcome,
     middleware::{Middleware, MiddlewareFn, MiddlewareFnService},
     service::Service,
@@ -27,6 +27,7 @@ pub trait ServiceExt<T>: Service<T> {
     {
         Unify::new(self)
     }
+
     fn then<F>(self, then: F) -> Then<Self, F>
     where
         Self: Sized,
@@ -107,6 +108,22 @@ pub trait ServiceExt<T>: Service<T> {
         F::Output: TryFuture,
     {
         AndThen::new(self, then)
+    }
+
+    fn unpack(self) -> Unpack<Self>
+    where
+        Self: Sized,
+        <Self::Output as IntoOutcome<T>>::Success: Extract<T>,
+    {
+        Unpack::new(self)
+    }
+
+    fn unpack_one(self) -> UnpackOne<Self>
+    where
+        Self: Sized,
+        <Self::Output as IntoOutcome<T>>::Success: ExtractOne<T>,
+    {
+        UnpackOne::new(self)
     }
 
     // Boxing
