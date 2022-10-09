@@ -41,13 +41,10 @@ where
     T1::Future: 'static,
     T2: Service<R> + Clone + 'static,
 {
-    type Output = Either<
-        Outcome<
-            <T1::Output as IntoOutcome<R>>::Success,
-            <T1::Output as IntoOutcome<R>>::Failure,
-            R,
-        >,
-        T2::Output,
+    type Output = Outcome<
+        Either<<T1::Output as IntoOutcome<R>>::Success, <T2::Output as IntoOutcome<R>>::Success>,
+        Either<<T1::Output as IntoOutcome<R>>::Failure, <T2::Output as IntoOutcome<R>>::Failure>,
+        R,
     >;
 
     type Future = OrElseFuture<T1, T2, R>;
@@ -100,13 +97,11 @@ where
     T2: Service<R>,
 {
     #[allow(clippy::type_complexity)]
-    type Output = Either<
-        Outcome<
-            <T1::Output as IntoOutcome<R>>::Success,
-            <T1::Output as IntoOutcome<R>>::Failure,
-            R,
-        >,
-        T2::Output,
+
+    type Output = Outcome<
+        Either<<T1::Output as IntoOutcome<R>>::Success, <T2::Output as IntoOutcome<R>>::Success>,
+        Either<<T1::Output as IntoOutcome<R>>::Failure, <T2::Output as IntoOutcome<R>>::Failure>,
+        R,
     >;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -121,22 +116,26 @@ where
                         self.set(OrElseFuture {
                             state: OrElseFutureState::Done,
                         });
-                        return Poll::Ready(Either::Left(Outcome::Success(ret)));
+                        return Poll::Ready(Outcome::Success(Either::Left(ret)));
                     }
                     Outcome::Failure(err) => {
                         self.set(OrElseFuture {
                             state: OrElseFutureState::Done,
                         });
-                        return Poll::Ready(Either::Left(Outcome::Failure(err)));
+                        return Poll::Ready(Outcome::Failure(Either::Left(err)));
                     }
                     Outcome::Next(next) => second.call(next),
                 },
                 OrProj::Second { future } => {
-                    let ret = ready!(future.poll(cx));
+                    let ret = match ready!(future.poll(cx)).into_outcome() {
+                        Outcome::Success(ret) => Outcome::Success(Either::Right(ret)),
+                        Outcome::Failure(err) => Outcome::Failure(Either::Right(err)),
+                        Outcome::Next(next) => Outcome::Next(next),
+                    };
                     self.set(OrElseFuture {
                         state: OrElseFutureState::Done,
                     });
-                    return Poll::Ready(Either::Right(ret));
+                    return Poll::Ready(ret);
                 }
                 OrProj::Done => panic!("poll after done"),
             };

@@ -117,19 +117,7 @@ where
     B::Data: Send,
     B::Error: Into<Error> + Send + Sync,
 {
-    use dale::Either;
-
-    json::<T, B>()
-        .or(form::<T, B>())
-        //.unify()
-        .then(|e| async {
-            let ret = match e {
-                Either::Left(l) => l,
-                Either::Right(r) => r,
-            };
-            crate::Result::Ok(ret)
-        })
-        .err_into()
+    json::<T, B>().or(form::<T, B>()).unify()
 }
 
 #[derive(Debug)]
