@@ -1,14 +1,16 @@
 #[cfg(feature = "alloc")]
 use crate::boxed::{Box, BoxService, BoxedService, LocalBoxService, LocalBoxedService};
 use crate::{
-    combinators::{ErrInto, MapErr, Or, Then},
+    combinators::{ErrInto, MapErr, Or, Then, Unify},
     filters::{And, AndThen, Combine, Extract, Func, Map, Tuple},
     into_outcome::IntoOutcome,
     middleware::{Middleware, MiddlewareFn, MiddlewareFnService},
     service::Service,
     types::MapFunc,
+    Outcome,
 };
 use core::future::Future;
+use either::Either;
 use futures_core::TryFuture;
 
 pub trait ServiceExt<T>: Service<T> {
@@ -19,6 +21,12 @@ pub trait ServiceExt<T>: Service<T> {
         Or::new(self, service)
     }
 
+    fn unify<S, E>(self) -> Unify<Self>
+    where
+        Self: Service<T, Output = Outcome<Either<S, S>, Either<E, E>, T>> + Sized,
+    {
+        Unify::new(self)
+    }
     fn then<F>(self, then: F) -> Then<Self, F>
     where
         Self: Sized,

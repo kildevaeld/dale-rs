@@ -121,12 +121,12 @@ where
 
     json::<T, B>()
         .or(form::<T, B>())
+        //.unify()
         .then(|e| async {
             let ret = match e {
                 Either::Left(l) => l,
                 Either::Right(r) => r,
             };
-
             crate::Result::Ok(ret)
         })
         .err_into()

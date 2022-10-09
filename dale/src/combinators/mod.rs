@@ -4,5 +4,6 @@ mod or;
 #[cfg(any(feature = "alloc", feature = "std"))]
 pub mod shared;
 mod then;
+mod unify;
 
-pub use self::{err_into::*, map_err::*, or::*, then::*, then::*};
+pub use self::{err_into::*, map_err::*, or::*, then::*, then::*, unify::*};
