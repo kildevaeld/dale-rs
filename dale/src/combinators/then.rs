@@ -22,13 +22,7 @@ impl<S, F> Then<S, F> {
 impl<S, F, R> Service<R> for Then<S, F>
 where
     S: Service<R>,
-    F: MapFunc<
-            Result<
-                <<S as Service<R>>::Output as IntoOutcome<R>>::Success,
-                <<S as Service<R>>::Output as IntoOutcome<R>>::Failure,
-            >,
-        > + Clone
-        + Send,
+    F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success> + Clone,
     F::Output: TryFuture,
 {
     type Output = Outcome<
@@ -54,7 +48,8 @@ pin_project! {
     pub struct ThenFuture<S, F, R>
     where
         S: Service<R>,
-        F: MapFunc<Result<<<S as Service<R>>::Output as IntoOutcome<R>>::Success,<<S as Service<R>>::Output as IntoOutcome<R>>::Failure>>,
+        F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>
+
     {
         #[pin]
        state: ThenFutureState<S, F, R>
@@ -66,7 +61,7 @@ pin_project! {
     enum ThenFutureState<S, F, R>
     where
         S: Service<R>,
-        F: MapFunc<Result<<<S as Service<R>>::Output as IntoOutcome<R>>::Success,<<S as Service<R>>::Output as IntoOutcome<R>>::Failure>>,
+        F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>
     {
         First {
             #[pin]
@@ -74,6 +69,7 @@ pin_project! {
             next:F
         },
         Second {
+            // output:Option<<<T::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract>,
             #[pin]
             future: F::Output
         },
@@ -84,12 +80,7 @@ pin_project! {
 impl<S, F, R> Future for ThenFuture<S, F, R>
 where
     S: Service<R>,
-    F: MapFunc<
-        Result<
-            <<S as Service<R>>::Output as IntoOutcome<R>>::Success,
-            <<S as Service<R>>::Output as IntoOutcome<R>>::Failure,
-        >,
-    >,
+    F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>,
     F::Output: TryFuture,
 {
     type Output = Outcome<
@@ -108,12 +99,11 @@ where
                     match ready!(future.poll(cx)).into_outcome() {
                         Outcome::Success(ret) => {
                             //
-                            next.call(Ok(ret))
+                            next.call(ret)
                         }
                         Outcome::Next(next) => return Poll::Ready(Outcome::Next(next)),
                         Outcome::Failure(err) => {
-                            //
-                            next.call(Err(err))
+                            return Poll::Ready(Outcome::Failure(Either::Left(err)))
                         }
                     }
                 }

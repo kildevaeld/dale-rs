@@ -51,33 +51,33 @@ where
     }
 }
 
-// impl<S, E, B> IntoOutcome<Request<B>> for Encoded<S, E>
-// where
-//     S: Serialize,
-//     E: Encoder,
-//     B: Body,
-// {
-//     type Success = Response<B>;
+impl<S, E, B> IntoOutcome<Request<B>> for Encoded<S, E>
+where
+    S: Serialize,
+    E: Encoder,
+    B: Body,
+{
+    type Success = Response<B>;
 
-//     type Failure = E::Error;
+    type Failure = E::Error;
 
-//     fn into_outcome(self) -> dale::Outcome<Self::Success, Self::Failure, Request<B>> {
-//         let ret = if self.1 {
-//             E::encode_pretty(&self.0)
-//         } else {
-//             E::encode(&self.0)
-//         };
+    fn into_outcome(self) -> dale::Outcome<Self::Success, Self::Failure, Request<B>> {
+        let ret = if self.1 {
+            E::encode_pretty(&self.0)
+        } else {
+            E::encode(&self.0)
+        };
 
-//         match ret {
-//             Ok(ret) => Outcome::Success(
-//                 Response::with(StatusCode::OK)
-//                     .set(ret)
-//                     .set(ContentType::from(E::MIME)),
-//             ),
-//             Err(err) => Outcome::Failure(err),
-//         }
-//     }
-// }
+        match ret {
+            Ok(ret) => Outcome::Success(
+                Response::with(StatusCode::OK)
+                    .set(ret)
+                    .set(ContentType::from(E::MIME)),
+            ),
+            Err(err) => Outcome::Failure(err),
+        }
+    }
+}
 
 #[cfg(feature = "json")]
 pub fn json<S: Serialize>(value: S) -> Encoded<S, super::Json> {

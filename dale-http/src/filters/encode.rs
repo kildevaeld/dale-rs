@@ -18,7 +18,7 @@ where
 {
     is_content_type::<Form, B>()
         .and(filters::aggregate())
-        .and_then(|(_, (buf,))| async move {
+        .then(|(_, (buf,))| async move {
             crate::encoder::Json::decode::<_, T>(buf).map_err(|err| {
                 tracing::debug!("request form body error: {}", err);
                 Error::new(BodyDeserializeError { cause: err.into() })
@@ -39,7 +39,7 @@ where
 {
     is_content_type::<Form, B>()
         .and(filters::aggregate())
-        .and_then(|(_, (buf,))| async move {
+        .then(|(_, (buf,))| async move {
             Form::decode::<_, T>(buf).map_err(|err| {
                 tracing::debug!("request form body error: {}", err);
                 Error::new(BodyDeserializeError { cause: err.into() })
@@ -108,7 +108,7 @@ where
 
     json::<T, B>()
         .or(form::<T, B>())
-        .and_then(|e| async {
+        .then(|e| async {
             let ret = match e {
                 Either::Left(l) => l,
                 Either::Right(r) => r,

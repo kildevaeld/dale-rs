@@ -104,7 +104,7 @@ pub fn optional_str<S: AsHeaderName + Clone + Send + Sync + 'static, B: Send + '
     Output = Outcome<(Request<B>, One<Option<HeaderValue>>), Error, Request<B>>,
 > + Clone {
     dale::filters::state(name)
-        .and_then(|req: (Request<B>, (S,))| async move {
+        .then(|req: (Request<B>, (S,))| async move {
             let (req, (name,)) = req;
             let header = req.headers().get(name).map(|h| h.clone());
             Result::<_, Error>::Ok((req, (header,)))

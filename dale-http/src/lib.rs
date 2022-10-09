@@ -29,7 +29,7 @@ pub use self::{
 pub type Outcome<B> = dale::Outcome<Response<B>, error::Error, Request<B>>;
 
 pub mod prelude {
-    pub use super::{modifier::*, request_ext::*};
+    pub use super::{body::BodyExt, modifier::*, request_ext::*};
     pub use dale::{IntoOutcomeExt, ServiceExt};
 }
 

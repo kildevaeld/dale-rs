@@ -17,7 +17,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
             Result::Ok(format!("Hello: {:?}", bytes))
         })
-        .or(filters::method().and_then(|(req, (method,))| async move {
+        .or(filters::method().then(|(req, (method,))| async move {
             //
             Result::Ok("And then this")
         }))

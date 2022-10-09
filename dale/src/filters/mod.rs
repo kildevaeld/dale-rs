@@ -1,4 +1,5 @@
 mod and;
+mod and_then;
 mod generic;
 mod map;
 
@@ -21,4 +22,4 @@ pub fn state<T: Send, S: Send + Clone + 'static>(
     }
 }
 
-pub use self::{and::*, generic::*, map::*};
+pub use self::{and::*, and_then::*, generic::*, map::*};

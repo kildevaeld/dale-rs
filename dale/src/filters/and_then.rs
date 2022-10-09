@@ -1,4 +1,4 @@
-use crate::{types::MapFunc, IntoOutcome, Outcome, Service};
+use crate::{IntoOutcome, Outcome, Service};
 use core::{
     pin::Pin,
     task::{Context, Poll},
@@ -6,6 +6,8 @@ use core::{
 use either::Either;
 use futures_core::{ready, Future, TryFuture};
 use pin_project_lite::pin_project;
+
+use super::{Extract, Func};
 
 #[derive(Debug, Clone, Copy)]
 pub struct AndThen<S, F> {
@@ -22,11 +24,12 @@ impl<S, F> AndThen<S, F> {
 impl<S, F, R> Service<R> for AndThen<S, F>
 where
     S: Service<R>,
-    F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success> + Clone,
+    <S::Output as IntoOutcome<R>>::Success: Extract<R>,
+    F: Func<<<S::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract> + Clone,
     F::Output: TryFuture,
 {
     type Output = Outcome<
-        <F::Output as TryFuture>::Ok,
+        (R, (<F::Output as TryFuture>::Ok,)),
         Either<<S::Output as IntoOutcome<R>>::Failure, <F::Output as TryFuture>::Error>,
         R,
     >;
@@ -48,7 +51,8 @@ pin_project! {
     pub struct AndThenFuture<S, F, R>
     where
         S: Service<R>,
-        F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>
+        <S::Output as IntoOutcome<R>>::Success: Extract<R>,
+        F: Func<<<S::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract>,
 
     {
         #[pin]
@@ -61,7 +65,8 @@ pin_project! {
     enum AndThenFutureState<S, F, R>
     where
         S: Service<R>,
-        F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>
+        <S::Output as IntoOutcome<R>>::Success: Extract<R>,
+        F: Func<<<S::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract>,
     {
         First {
             #[pin]
@@ -71,7 +76,8 @@ pin_project! {
         Second {
             // output:Option<<<T::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract>,
             #[pin]
-            future: F::Output
+            future: F::Output,
+            req: Option<R>,
         },
         Done,
     }
@@ -80,11 +86,12 @@ pin_project! {
 impl<S, F, R> Future for AndThenFuture<S, F, R>
 where
     S: Service<R>,
-    F: MapFunc<<<S as Service<R>>::Output as IntoOutcome<R>>::Success>,
+    <S::Output as IntoOutcome<R>>::Success: Extract<R>,
+    F: Func<<<S::Output as IntoOutcome<R>>::Success as Extract<R>>::Extract>,
     F::Output: TryFuture,
 {
     type Output = Outcome<
-        <F::Output as TryFuture>::Ok,
+        (R, (<F::Output as TryFuture>::Ok,)),
         Either<<S::Output as IntoOutcome<R>>::Failure, <F::Output as TryFuture>::Error>,
         R,
     >;
@@ -93,13 +100,14 @@ where
         loop {
             let pin = self.as_mut().project();
 
-            let future = match pin.state.project() {
+            let (req, future) = match pin.state.project() {
                 StateProj::First { future, next } => {
                     //
                     match ready!(future.poll(cx)).into_outcome() {
                         Outcome::Success(ret) => {
-                            //
-                            next.call(ret)
+                            let (req, ex) = ret.unpack();
+
+                            (req, next.call(ex))
                         }
                         Outcome::Next(next) => return Poll::Ready(Outcome::Next(next)),
                         Outcome::Failure(err) => {
@@ -107,10 +115,9 @@ where
                         }
                     }
                 }
-                StateProj::Second { future } => {
-                    //
+                StateProj::Second { future, req } => {
                     let ret = match ready!(future.try_poll(cx)) {
-                        Ok(ret) => Outcome::Success(ret),
+                        Ok(ret) => Outcome::Success((req.take().unwrap(), (ret,))),
                         Err(err) => Outcome::Failure(Either::Right(err)),
                     };
 
@@ -126,7 +133,10 @@ where
             };
 
             self.set(AndThenFuture {
-                state: AndThenFutureState::Second { future },
+                state: AndThenFutureState::Second {
+                    future,
+                    req: Some(req),
+                },
             });
         }
     }

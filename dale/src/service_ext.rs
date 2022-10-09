@@ -1,8 +1,8 @@
 #[cfg(feature = "alloc")]
 use crate::boxed::{Box, BoxService, BoxedService, LocalBoxService, LocalBoxedService};
 use crate::{
-    combinators::{AndThen, ErrInto, MapErr, Or, Then},
-    filters::{And, Combine, Extract, Func, Map, Tuple},
+    combinators::{ErrInto, MapErr, Or, Then},
+    filters::{And, AndThen, Combine, Extract, Func, Map, Tuple},
     into_outcome::IntoOutcome,
     middleware::{Middleware, MiddlewareFn, MiddlewareFnService},
     service::Service,
@@ -22,24 +22,10 @@ pub trait ServiceExt<T>: Service<T> {
     fn then<F>(self, then: F) -> Then<Self, F>
     where
         Self: Sized,
-        F: MapFunc<
-                Result<
-                    <Self::Output as IntoOutcome<T>>::Success,
-                    <Self::Output as IntoOutcome<T>>::Failure,
-                >,
-            > + Clone,
-        F::Output: TryFuture,
-    {
-        Then::new(self, then)
-    }
-
-    fn and_then<F>(self, then: F) -> AndThen<Self, F>
-    where
-        Self: Sized,
         F: MapFunc<<Self::Output as IntoOutcome<T>>::Success> + Clone,
         F::Output: TryFuture,
     {
-        AndThen::new(self, then)
+        Then::new(self, then)
     }
 
     // Middlewares
@@ -103,6 +89,16 @@ pub trait ServiceExt<T>: Service<T> {
         F: Func<<<Self::Output as IntoOutcome<T>>::Success as Extract<T>>::Extract> + Clone,
     {
         Map::new(self, fun)
+    }
+
+    fn and_then<F>(self, then: F) -> AndThen<Self, F>
+    where
+        Self: Sized,
+        <Self::Output as IntoOutcome<T>>::Success: Extract<T>,
+        F: Func<<<Self::Output as IntoOutcome<T>>::Success as Extract<T>>::Extract> + Clone,
+        F::Output: TryFuture,
+    {
+        AndThen::new(self, then)
     }
 
     // Boxing

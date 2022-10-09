@@ -64,7 +64,7 @@ where
 
     dale_fs::FileSystem::<Tokio>::file(path, opts)
         .and(file_options())
-        .and_then(|(_, (node, meta, mime, options))| async move {
+        .then(|(_, (node, meta, mime, options))| async move {
             Result::<_, Error>::Ok(file_conditional(node, mime, meta, options)?)
         })
         .err_into()
@@ -83,7 +83,7 @@ where
 
     let service = dale_fs::FileSystem::<Tokio>::root_with(path.clone(), FileTypeMask::REGULAR)
         .and(file_options())
-        .and_then(move |(_, (node, options))| {
+        .then(move |(_, (node, options))| {
             let root = path.clone();
             async move {
                 match node {

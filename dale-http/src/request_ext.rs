@@ -17,7 +17,7 @@ pub trait RequestExt<B> {
     where
         B: Body;
 
-    fn text<'a>(&'a mut self) -> ToText<'a, B>
+    fn text<'a>(&'a mut self) -> ToText<B>
     where
         B: Body;
 }
@@ -31,10 +31,12 @@ impl<B> RequestExt<B> for Request<B> {
         ToBytes::new(body)
     }
 
-    fn text<'a>(&'a mut self) -> ToText<'a, B>
+    fn text<'a>(&mut self) -> ToText<B>
     where
         B: Body,
     {
-        ToText::new(self)
+        let body = std::mem::replace(self.body_mut(), B::empty());
+
+        ToText::new(body)
     }
 }
