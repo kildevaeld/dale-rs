@@ -1,0 +1,60 @@
+[package]
+edition = "2021"
+name = "dale-http"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+
+headers = ["dep:headers"]
+hyper = ["dep:hyper"]
+stream = ["hyper?/stream"]
+
+fs = ["futures-io", "futures-util", "dale-fs", "dale-runtime", "headers", "stream"]
+
+json = ["dep:serde_json", "serde"]
+serde = ["dep:serde", "dep:http-serde", "dep:mime_serde_shim", "dale-fs?/serde", "serde_urlencoded", "headers"]
+
+[dependencies]
+bytes = "1"
+dale = {path = "../dale", features = ["http", "std", "alloc"]}
+either = {version = "1"}
+futures-core = "0.3"
+http = {version = "0.2"}
+http-body = {version = "0.4"}
+mime = "0.3"
+pin-project-lite = "0.2"
+tracing = {version = "0.1", default-features = false, features = ["std"]}
+
+## FS
+dale-fs = {path = "../dale-fs", features = ["http"], optional = true}
+dale-runtime = {path = "../dale-runtime", features = ["tokio"], optional = true}
+futures-io = {version = "0.3", optional = true}
+futures-util = {version = "0.3", features = ["io"], optional = true}
+http-serde = {version = "1", optional = true}
+mime_serde_shim = {version = "0.2", optional = true}
+
+## Headers
+headers = {version = "0.3", optional = true}
+
+hyper = {version = "0.14", features = [], optional = true}
+
+## Encoding
+serde = {version = "1", features = ["derive"], optional = true}
+serde_json = {version = "1", optional = true}
+serde_urlencoded = {version = "0.7", optional = true}
+
+[dev-dependencies]
+hyper = {version = "0.14", features = ["server", "http1", "runtime"]}
+tokio = {version = "1", features = ["rt", "net", "macros"]}
+
+[[example]]
+name = "http"
+path = "examples/http.rs"
+required-features = ["hyper"]
+
+[[example]]
+name = "static"
+path = "examples/static.rs"
+required-features = ["hyper", "fs", "json"]

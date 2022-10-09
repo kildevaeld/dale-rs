@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+  "dale",
+  "dale-derive",
+  "dale-http",
+  "dale-fs",
+  "dale-runtime",
+]

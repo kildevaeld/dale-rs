@@ -1,0 +1,20 @@
+[package]
+edition = "2021"
+name = "dale-runtime"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["fs", "tokio"]
+fs = ["futures-io", "tokio?/fs", "tokio-stream", "async-compat"]
+tokio = ["dep:tokio"]
+
+[dependencies]
+async-trait = "0.1"
+futures-core = "0.3"
+futures-io = {version = "0.3", optional = true}
+
+async-compat = {version = "0.2", optional = true}
+tokio = {version = "1", features = [], optional = true}
+tokio-stream = {version = "0.1", features = ["fs"], optional = true}

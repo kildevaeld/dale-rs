@@ -1,0 +1,28 @@
+[package]
+edition = "2021"
+name = "dale"
+version = "0.1.0"
+
+[dependencies]
+either = {version = "1", default-features = false}
+futures-core = {version = "0.3", default-features = false}
+http = {version = "0.2", optional = true}
+pin-project-lite = "0.2"
+
+dale-derive = {path = "../dale-derive", optional = true}
+
+[dev-dependencies]
+futures-executor = "0.3"
+
+[features]
+default = []
+
+alloc = []
+derive = ["dale-derive"]
+http = ["dep:http"]
+std = ["either/use_std", "futures-core/std"]
+
+[[example]]
+name = "derive"
+path = "examples/derive.rs"
+required-features = ["derive"]

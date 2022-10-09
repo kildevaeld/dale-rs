@@ -1,0 +1,26 @@
+[package]
+edition = "2021"
+name = "dale-fs"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags = "1"
+dale = {path = "../dale"}
+dale-runtime = {path = "../dale-runtime", features = ["fs"]}
+futures-core = {version = "0.3", default-features = false}
+futures-util = {version = "0.3", default-features = false}
+http = {version = "0.2", optional = true}
+mime = "0.3"
+mime_guess = "2"
+pin-utils = "0.1"
+relative-path = {version = "1"}
+
+[features]
+default = []
+http = ["dep:http"]
+serde = ["relative-path/serde"]
+
+[dev-dependencies]
+tokio = {version = "1", features = ["macros", "rt", "rt-multi-thread"]}
