@@ -1,9 +1,7 @@
 mod into_outcome;
 mod shared;
-
-use syn::{parse_macro_input, DeriveInput};
-
 use proc_macro::TokenStream;
+use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(IntoOutcome)]
 pub fn into_outcome(input: TokenStream) -> TokenStream {
