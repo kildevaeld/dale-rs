@@ -9,6 +9,7 @@ default = []
 
 full = [
   "headers",
+  "router",
   "fs",
   "serde",
   "json",
@@ -19,8 +20,11 @@ headers = ["dep:headers"]
 hyper = ["dep:hyper"]
 stream = ["hyper?/stream"]
 
+router = ["dep:router"]
+
 fs = ["futures-io", "futures-util", "dale-fs", "dale-runtime", "headers", "stream"]
 
+## Serde
 json = ["dep:serde_json", "serde"]
 qs = ["dep:serde_qs"]
 serde = ["dep:serde", "dep:http-serde", "dep:mime_serde_shim", "dale-fs?/serde", "serde_urlencoded", "headers"]
@@ -55,6 +59,9 @@ serde_json = {version = "1", optional = true}
 serde_qs = {version = "0.10", optional = true}
 serde_urlencoded = {version = "0.7", optional = true}
 
+## Router
+router = {git = "https://github.com/kildevaeld/router-rs", optional = true}
+
 [dev-dependencies]
 hyper = {version = "0.14", features = ["server", "http1", "runtime"]}
 tokio = {version = "1", features = ["rt", "net", "macros"]}
@@ -63,6 +70,16 @@ tokio = {version = "1", features = ["rt", "net", "macros"]}
 name = "http"
 path = "examples/http.rs"
 required-features = ["hyper"]
+
+[[example]]
+name = "simple"
+path = "examples/simple.rs"
+required-features = ["hyper"]
+
+[[example]]
+name = "router"
+path = "examples/router.rs"
+required-features = ["hyper", "router"]
 
 [[example]]
 name = "static"

@@ -10,9 +10,10 @@ mod modifier;
 mod modifiers;
 pub mod mount;
 pub mod reply_impl;
-mod types;
-
 mod request_ext;
+#[cfg(feature = "router")]
+pub mod router;
+mod types;
 
 #[cfg(feature = "hyper")]
 pub mod hyper;

@@ -11,6 +11,10 @@ use serde::de::DeserializeOwned;
 
 use crate::{common::Aggregate, error::Error, Body};
 
+pub trait Decodable {
+    
+}
+
 pub trait Decoder {
     type Error;
     const MIME: (mime::Name<'static>, mime::Name<'static>);

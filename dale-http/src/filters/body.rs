@@ -11,6 +11,48 @@ use http::Request;
 
 use std::{convert::Infallible, fmt};
 
+macro_rules! service_impl {
+    ($name: ident, $future: ident, $type: ident, fn ($req: ident) $func: block) => {
+        pub struct $name;
+
+        impl<B: Body> Service<Request<B>> for $name {
+            type Output = Outcome<(Request<B>, ($type,)), Error, Request<B>>;
+            type Future = $future<B>;
+
+            fn call(&self, req: Request<B>) -> Self::Future {
+                $future { req: Some(req) }
+            }
+        }
+
+        pin_project_lite::pin_project! {
+            pub struct $future<B> {
+                req: Option<Request<B>>,
+            }
+        }
+
+        impl<B: Body> std::future::Future for $future<B> {
+            type Output = Outcome<(Request<B>, ($type,)), Error, Request<B>>;
+            fn poll(
+                self: core::pin::Pin<&mut Self>,
+                _cx: &mut core::task::Context<'_>,
+            ) -> core::task::Poll<Self::Output> {
+                let this = self.project();
+
+                let mut $req = this.req.take().expect("request");
+
+                let ret = $func;
+
+                core::task::Poll::Ready(ret)
+            }
+        }
+    };
+}
+
+service_impl!(GetBody, GetBodyFuture, B, fn (req) {
+    let body = std::mem::replace(req.body_mut(), B::empty());
+    Outcome::Success((req, (body,)))
+});
+
 #[derive(Debug)]
 pub struct BodyReadError<E>(pub E);
 
