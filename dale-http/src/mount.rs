@@ -1,4 +1,4 @@
-use dale::{Either, IntoOutcome, Middleware, Outcome, Service};
+use dale::{IntoOutcome, Middleware, Outcome, Service};
 use futures_core::ready;
 use http::{Request, Uri};
 use pin_project_lite::pin_project;
@@ -79,67 +79,67 @@ unsafe impl<T: Send, B> Send for MountTask<T, B> {}
 unsafe impl<T: Sync, B> Sync for MountTask<T, B> {}
 
 impl<T, B> MountTask<T, B> {
-    #[inline]
-    fn starts_with(&self, url: &Uri) -> bool {
-        let path = url.path();
-        if path.len() < self.path.len() {
-            path.starts_with(&self.path.as_str()[0..(self.path.len() - 1)])
-        } else {
-            path.starts_with(self.path.as_str())
-        }
-    }
+    // #[inline]
+    // fn starts_with(&self, url: &Uri) -> bool {
+    //     let path = url.path();
+    //     if path.len() < self.path.len() {
+    //         path.starts_with(&self.path.as_str()[0..(self.path.len() - 1)])
+    //     } else {
+    //         path.starts_with(self.path.as_str())
+    //     }
+    // }
 
-    #[inline]
-    fn replace_path(&self, url: &Uri) -> Uri {
-        let p = {
-            let path = url.path();
-            let path = if path.ends_with("/") {
-                &path[self.path.len()..]
-            } else {
-                &path[(self.path.len() - 1)..]
-            };
-            if path.is_empty() {
-                "/"
-            } else {
-                path
-            }
-        };
-        let port = url.port();
-        let mut o = Vec::default();
-        if let Some(s) = url.scheme_str() {
-            o.push(s);
-        }
-        if let Some(s) = url.authority() {
-            o.push(s.as_str());
-        }
-        if let Some(p) = &port {
-            o.extend(&[":", p.as_str()]);
-        }
+    // #[inline]
+    // fn replace_path(&self, url: &Uri) -> Uri {
+    //     let p = {
+    //         let path = url.path();
+    //         let path = if path.ends_with("/") {
+    //             &path[self.path.len()..]
+    //         } else {
+    //             &path[(self.path.len() - 1)..]
+    //         };
+    //         if path.is_empty() {
+    //             "/"
+    //         } else {
+    //             path
+    //         }
+    //     };
+    //     let port = url.port();
+    //     let mut o = Vec::default();
+    //     if let Some(s) = url.scheme_str() {
+    //         o.push(s);
+    //     }
+    //     if let Some(s) = url.authority() {
+    //         o.push(s.as_str());
+    //     }
+    //     if let Some(p) = &port {
+    //         o.extend(&[":", p.as_str()]);
+    //     }
 
-        o.push(&p);
-        if let Some(s) = url.query() {
-            o.extend(&["?", s]);
-        }
+    //     o.push(&p);
+    //     if let Some(s) = url.query() {
+    //         o.extend(&["?", s]);
+    //     }
 
-        Uri::from_str(&o.join("")).unwrap()
-    }
+    //     Uri::from_str(&o.join("")).unwrap()
+    // }
 
-    #[inline]
-    fn ensure_mount(&self, req: &mut Request<B>, path: String) {
-        if req.extensions().get::<MountPath>().is_none() {
-            req.extensions_mut().insert(MountPath(Vec::default()));
-        }
-        req.extensions_mut()
-            .get_mut::<MountPath>()
-            .unwrap()
-            .0
-            .push(path);
-    }
+    // #[inline]
+    // fn ensure_mount(&self, req: &mut Request<B>, path: String) {
+    //     if req.extensions().get::<MountPath>().is_none() {
+    //         req.extensions_mut().insert(MountPath(Vec::default()));
+    //     }
+    //     req.extensions_mut()
+    //         .get_mut::<MountPath>()
+    //         .unwrap()
+    //         .0
+    //         .push(path);
+    // }
 }
 
 impl<T, B> Service<Request<B>> for MountTask<T, B>
 where
-    T: Service<Request<B>>,
+    T: Service<Request<B>> + Clone,
 {
     type Output = Outcome<
         <T::Output as IntoOutcome<Request<B>>>::Success,
@@ -147,44 +147,57 @@ where
         Request<B>,
     >;
 
-    type Future = Either<MountFuture<T::Future, B>, std::future::Ready<Self::Output>>;
+    type Future = MountFuture<T, B>;
 
     #[inline(always)]
-    fn call(&self, mut req: Request<B>) -> Self::Future {
-        if self.starts_with(req.uri()) {
-            let url = req.uri().clone();
-            *req.uri_mut() = self.replace_path(req.uri());
-            self.ensure_mount(&mut req, self.path[0..self.path.len() - 1].to_string());
-            Either::Left(MountFuture::new(self.task.call(req), url))
-        } else {
-            Either::Right(std::future::ready(Outcome::Next(req)))
-        }
+    fn call(&self, req: Request<B>) -> Self::Future {
+        MountFuture::new(self.task.clone(), self.path.clone(), req)
     }
 }
 
 pin_project! {
     pub struct MountFuture<T, B>
+    where T: Service<Request<B>>
     {
         #[pin]
-        future: T,
-        uri: Option<Uri>,
-        _b: PhantomData<B>
+        state: State<T, B>
     }
 }
 
-impl<T, B> MountFuture<T, B> {
-    fn new(future: T, uri: Uri) -> MountFuture<T, B> {
+pin_project! {
+    #[project = StatProj]
+    enum State<T, B> where T: Service<Request<B>> {
+        Init {
+            task: T,
+            req: Option<Request<B>>,
+            path: String,
+        },
+        Future {
+            #[pin]
+            future: T::Future,
+            uri: Option<Uri>
+        }
+    }
+}
+
+impl<T, B> MountFuture<T, B>
+where
+    T: Service<Request<B>>,
+{
+    fn new(task: T, path: String, req: Request<B>) -> MountFuture<T, B> {
         MountFuture {
-            future,
-            uri: uri.into(),
-            _b: PhantomData,
+            state: State::Init {
+                task,
+                req: Some(req),
+                path,
+            },
         }
     }
 }
 
 impl<T, B> Future for MountFuture<T, B>
 where
-    T: Future,
+    T: Service<Request<B>>,
     T::Output: IntoOutcome<Request<B>>,
 {
     type Output = Outcome<
@@ -193,15 +206,41 @@ where
         Request<B>,
     >;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let this = self.project();
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        loop {
+            let this = self.as_mut().project();
 
-        match ready!(this.future.poll(cx)).into_outcome() {
-            Outcome::Next(mut req) => {
-                *req.uri_mut() = this.uri.take().unwrap();
-                Poll::Ready(Outcome::Next(req))
-            }
-            o => Poll::Ready(o),
+            let (future, uri) = match this.state.project() {
+                StatProj::Init { task, req, path } => {
+                    let mut req = req.take().unwrap();
+                    if starts_with(path, req.uri()) {
+                        let url = req.uri().clone();
+                        *req.uri_mut() = replace_path(path, req.uri());
+                        ensure_mount(&mut req, path[0..path.len() - 1].to_string());
+                        (task.call(req), url)
+                    } else {
+                        return Poll::Ready(Outcome::Next(req));
+                    }
+                }
+                StatProj::Future { future, uri } => {
+                    let ret = match ready!(future.poll(cx)).into_outcome() {
+                        Outcome::Next(mut req) => {
+                            *req.uri_mut() = uri.take().unwrap();
+                            Poll::Ready(Outcome::Next(req))
+                        }
+                        o => Poll::Ready(o),
+                    };
+
+                    return ret;
+                }
+            };
+
+            self.set(MountFuture {
+                state: State::Future {
+                    future,
+                    uri: Some(uri),
+                },
+            })
         }
     }
 }
@@ -232,4 +271,60 @@ impl fmt::Display for MountPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0.join("/"))
     }
+}
+#[inline]
+fn starts_with(p: &str, url: &Uri) -> bool {
+    let path = url.path();
+    if path.len() < p.len() {
+        path.starts_with(&p[0..(p.len() - 1)])
+    } else {
+        path.starts_with(p)
+    }
+}
+
+#[inline]
+fn replace_path(path: &str, url: &Uri) -> Uri {
+    let p = {
+        let path2 = url.path();
+        let path = if path2.ends_with("/") {
+            &path2[path.len()..]
+        } else {
+            &path2[(path.len() - 1)..]
+        };
+        if path.is_empty() {
+            "/"
+        } else {
+            path
+        }
+    };
+    let port = url.port();
+    let mut o = Vec::default();
+    if let Some(s) = url.scheme_str() {
+        o.push(s);
+    }
+    if let Some(s) = url.authority() {
+        o.push(s.as_str());
+    }
+    if let Some(p) = &port {
+        o.extend(&[":", p.as_str()]);
+    }
+
+    o.push(&p);
+    if let Some(s) = url.query() {
+        o.extend(&["?", s]);
+    }
+
+    Uri::from_str(&o.join("")).unwrap()
+}
+
+#[inline]
+fn ensure_mount<B>(req: &mut Request<B>, path: String) {
+    if req.extensions().get::<MountPath>().is_none() {
+        req.extensions_mut().insert(MountPath(Vec::default()));
+    }
+    req.extensions_mut()
+        .get_mut::<MountPath>()
+        .unwrap()
+        .0
+        .push(path);
 }
