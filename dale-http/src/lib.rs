@@ -40,6 +40,8 @@ pub mod reply {
     pub use super::reply_impl::*;
 }
 
+#[cfg(feature = "headers")]
+pub use headers;
 //
 mod taker;
 pub use self::taker::*;
