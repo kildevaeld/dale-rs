@@ -18,7 +18,9 @@ mod types;
 #[cfg(feature = "hyper")]
 pub mod hyper;
 
-pub use http::{Method, Request, Response, StatusCode, Uri};
+pub use bytes::{self, Bytes};
+pub use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri};
+pub use mime;
 
 pub use self::{
     body::Body,
@@ -42,6 +44,7 @@ pub mod reply {
 
 #[cfg(feature = "headers")]
 pub use headers;
+
 //
 mod taker;
 pub use self::taker::*;
