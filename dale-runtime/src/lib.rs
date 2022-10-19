@@ -1,6 +1,8 @@
 #[cfg(feature = "fs")]
 pub mod fs;
 
+pub mod executor;
+
 #[cfg(feature = "tokio")]
 mod tokio;
 
