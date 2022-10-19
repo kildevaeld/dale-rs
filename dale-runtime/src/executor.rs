@@ -2,11 +2,11 @@ use futures_core::{future::BoxFuture, Future};
 
 pub trait Executor: Send + Sync {
     type Error;
-    fn spawn<F: Future + 'static + Send>(&self, future: F)
+    fn spawn<F: Future + 'static + Send>(future: F)
     where
         F::Output: Send;
 
-    fn unblock<R, F>(&self, ret: F) -> BoxFuture<'static, Result<R, Self::Error>>
+    fn unblock<R, F>(ret: F) -> BoxFuture<'static, Result<R, Self::Error>>
     where
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static;

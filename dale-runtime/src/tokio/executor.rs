@@ -7,14 +7,14 @@ use super::Tokio;
 
 impl Executor for Tokio {
     type Error = JoinError;
-    fn spawn<F: Future + 'static + Send>(&self, future: F)
+    fn spawn<F: Future + 'static + Send>(future: F)
     where
         F::Output: Send,
     {
         tokio::spawn(future);
     }
 
-    fn unblock<R, F>(&self, ret: F) -> BoxFuture<'static, Result<R, JoinError>>
+    fn unblock<R, F>(ret: F) -> BoxFuture<'static, Result<R, JoinError>>
     where
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
