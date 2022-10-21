@@ -9,6 +9,22 @@ pub struct MapErr<F, S, E> {
     _e: PhantomData<E>,
 }
 
+impl<F: Clone, S: Clone, E> Clone for MapErr<F, S, E> {
+    fn clone(&self) -> Self {
+        MapErr {
+            func: self.func.clone(),
+            service: self.service.clone(),
+            _e: PhantomData,
+        }
+    }
+}
+
+impl<F: Copy, S: Copy, E> Copy for MapErr<F, S, E> {}
+
+unsafe impl<F: Send, S: Send, E> Send for MapErr<F, S, E> {}
+
+unsafe impl<F: Sync, S: Sync, E> Sync for MapErr<F, S, E> {}
+
 impl<F, S, E> MapErr<F, S, E> {
     pub fn new(service: S, func: F) -> MapErr<F, S, E> {
         MapErr {
