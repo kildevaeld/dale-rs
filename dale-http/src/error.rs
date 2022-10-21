@@ -23,8 +23,8 @@ impl Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "dale error: {}", self.error)
     }
 }
 
@@ -99,8 +99,15 @@ pub enum KnownError {
 }
 
 impl fmt::Display for KnownError {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            KnownError::Internal(err) => write!(f, "internal server error: {}", err),
+            KnownError::InvalidHeader(h) => write!(f, "invalid header: {}", h),
+            KnownError::MissingHeader(h) => write!(f, "missing header: {}", h),
+            KnownError::PayloadTooLarge => write!(f, "payload too large"),
+            KnownError::UnsupportMediaType => write!(f, "unsupported media type"),
+            KnownError::Utf8(err) => write!(f, "encoding error: {}", err),
+        }
     }
 }
 
