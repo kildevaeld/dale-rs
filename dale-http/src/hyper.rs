@@ -37,7 +37,7 @@ where
     T: Send + Service<Request<Body>> + Clone + 'static,
     // <T::Output as IntoOutcome<Request<Body>>>::Success: Reply,
 {
-    type Response = DaisyHyperService<T>;
+    type Response = DaleHyperService<T>;
     type Error = Infallible;
     type Future = MakeTaskHyperServiceFuture<T>;
 
@@ -47,7 +47,7 @@ where
 
     fn call(&mut self, _cx: &'t Ctx) -> Self::Future {
         MakeTaskHyperServiceFuture {
-            service: Some(DaisyHyperService {
+            service: Some(DaleHyperService {
                 service: self.task.clone(),
             }),
         }
@@ -56,22 +56,22 @@ where
 
 pin_project! {
     pub struct MakeTaskHyperServiceFuture<S> {
-        service: Option<DaisyHyperService<S>>,
+        service: Option<DaleHyperService<S>>,
     }
 }
 impl<S> Future for MakeTaskHyperServiceFuture<S> {
-    type Output = Result<DaisyHyperService<S>, Infallible>;
+    type Output = Result<DaleHyperService<S>, Infallible>;
     fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
         Poll::Ready(Ok(this.service.take().unwrap()))
     }
 }
 
-pub struct DaisyHyperService<T> {
+pub struct DaleHyperService<T> {
     service: T,
 }
 
-impl<T> HyperService<Request<Body>> for DaisyHyperService<T>
+impl<T> HyperService<Request<Body>> for DaleHyperService<T>
 where
     T: Send + Service<Request<Body>> + Clone + 'static,
     <T::Output as IntoOutcome<Request<Body>>>::Success: Reply<Body>,
@@ -80,7 +80,7 @@ where
 
     type Error = <T::Output as IntoOutcome<Request<Body>>>::Failure; //<TowerService<T> as HyperService<Request<Body>>>::Error;
 
-    type Future = DaisyHyperServiceFuture<T>;
+    type Future = DaleHyperServiceFuture<T>;
 
     fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
@@ -88,17 +88,17 @@ where
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         let fut = self.service.call(req);
-        DaisyHyperServiceFuture { future: fut }
+        DaleHyperServiceFuture { future: fut }
     }
 }
 
 pin_project! {
-    pub struct DaisyHyperServiceFuture<S> where S: Service<Request<Body>> {
+    pub struct DaleHyperServiceFuture<S> where S: Service<Request<Body>> {
         #[pin]
         future: S::Future,
     }
 }
-impl<S> Future for DaisyHyperServiceFuture<S>
+impl<S> Future for DaleHyperServiceFuture<S>
 where
     S: Service<Request<Body>>,
     <S::Output as IntoOutcome<Request<Body>>>::Success: Reply<Body>,
