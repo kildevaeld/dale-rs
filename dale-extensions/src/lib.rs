@@ -110,6 +110,7 @@ where
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct StateService<T, S> {
     state: S,
     service: T,
