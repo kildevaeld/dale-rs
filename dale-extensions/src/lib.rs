@@ -64,6 +64,19 @@ impl Extensions for http::Extensions {
     }
 }
 
+#[cfg(feature = "http")]
+impl<B> Extensible for http::Request<B> {
+    type Extensions = http::Extensions;
+
+    fn extensions(&self) -> &Self::Extensions {
+        self.extensions()
+    }
+
+    fn extensions_mut(&mut self) -> &mut Self::Extensions {
+        self.extensions_mut()
+    }
+}
+
 pub trait Extensible {
     type Extensions: Extensions;
 
