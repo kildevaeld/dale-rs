@@ -100,10 +100,10 @@ where
     T: Service<R>,
     R: Extensible,
 {
-    type Service = StateService<T, S>;
+    type Service = State<T, S>;
 
     fn wrap(&self, service: T) -> Self::Service {
-        StateService {
+        State {
             state: self.state.clone(),
             service,
         }
@@ -111,12 +111,12 @@ where
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct StateService<T, S> {
+pub struct State<T, S> {
     state: S,
     service: T,
 }
 
-impl<T, S, R> Service<R> for StateService<T, S>
+impl<T, S, R> Service<R> for State<T, S>
 where
     T: Service<R>,
     S: Clone + Send + Sync + 'static,
