@@ -1,3 +1,5 @@
+use dale::{Middleware, Service};
+
 pub trait Extensions {
     fn insert<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T>;
     fn get<T: Send + Sync + 'static>(&self) -> Option<&T>;
@@ -69,6 +71,53 @@ pub trait Extensible {
     fn extensions_mut(&mut self) -> &mut Self::Extensions;
 }
 
+pub struct StateMiddleware<S> {
+    state: S,
+}
+
+impl<S> StateMiddleware<S> {
+    pub fn new(state: S) -> StateMiddleware<S> {
+        StateMiddleware { state }
+    }
+}
+
+impl<S, T, R> Middleware<R, T> for StateMiddleware<S>
+where
+    S: Clone + Send + Sync + 'static,
+    T: Service<R>,
+    R: Extensible,
+{
+    type Service = StateService<T, S>;
+
+    fn wrap(&self, service: T) -> Self::Service {
+        StateService {
+            state: self.state.clone(),
+            service,
+        }
+    }
+}
+
+pub struct StateService<T, S> {
+    state: S,
+    service: T,
+}
+
+impl<T, S, R> Service<R> for StateService<T, S>
+where
+    T: Service<R>,
+    S: Clone + Send + Sync + 'static,
+    R: Extensible,
+{
+    type Output = T::Output;
+
+    type Future = T::Future;
+
+    fn call(&self, mut req: R) -> Self::Future {
+        req.extensions_mut().insert(self.state.clone());
+        self.service.call(req)
+    }
+}
+
 pub mod filters {
 
     use core::{convert::Infallible, future::Future, marker::PhantomData};
@@ -97,7 +146,7 @@ pub mod filters {
         R: Extensible,
         T: Sync + Send + Clone + 'static,
     {
-        type Output = Outcome<T, Infallible, R>;
+        type Output = Outcome<(R, (T,)), Infallible, R>;
         type Future = ExtensionServiceFuture<T, R>;
 
         fn call(&self, req: R) -> Self::Future {
@@ -120,13 +169,18 @@ pub mod filters {
         R: Extensible,
         T: Sync + Send + Clone + 'static,
     {
-        type Output = Outcome<T, Infallible, R>;
+        type Output = Outcome<(R, (T,)), Infallible, R>;
 
         fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
             let this = self.as_mut().project();
-            match this.req.as_ref().expect("request").extensions().get::<T>() {
-                Some(ret) => Poll::Ready(Outcome::Success(ret.clone())),
-                None => Poll::Ready(Outcome::Next(this.req.take().unwrap())),
+            let req = this.req.take().unwrap();
+
+            match req.extensions().get::<T>() {
+                Some(ret) => {
+                    let ret = ret.clone();
+                    Poll::Ready(Outcome::Success((req, (ret,))))
+                }
+                None => Poll::Ready(Outcome::Next(req)),
             }
         }
     }
