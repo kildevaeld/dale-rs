@@ -11,7 +11,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
     let service = dale_http::hyper::make(dale::filters::any().map(|| "Hello, World!"));
 
-    Server::bind(&addr).serve(service).await?;
+    Server::bind(&addr).serve(service).await;
 
     Ok(())
 }
