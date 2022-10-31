@@ -22,7 +22,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
             .unify()
             .and(filters::text())
             .map(|body| reply::text(format!("Hello: {}", body))))
-        .or(filters::method().and_then(|method| async move {
+        .or(filters::method().and_then(|_method| async move {
             //
             Result::Ok("And then this")
         }))

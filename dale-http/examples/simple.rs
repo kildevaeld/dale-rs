@@ -1,9 +1,5 @@
-use std::path::Path;
-
-use dale::filters::any;
-use dale_http::{filters, reply, Result};
-use dale_http::{prelude::*, Request};
-use hyper::{Body, Server};
+use dale_http::prelude::*;
+use hyper::Server;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -11,7 +7,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
     let service = dale_http::hyper::make(dale::filters::any().map(|| "Hello, World!"));
 
-    Server::bind(&addr).serve(service).await;
+    Server::bind(&addr).serve(service).await?;
 
     Ok(())
 }

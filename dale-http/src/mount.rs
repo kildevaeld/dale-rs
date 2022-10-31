@@ -78,65 +78,6 @@ unsafe impl<T: Send, B> Send for MountTask<T, B> {}
 
 unsafe impl<T: Sync, B> Sync for MountTask<T, B> {}
 
-impl<T, B> MountTask<T, B> {
-    // #[inline]
-    // fn starts_with(&self, url: &Uri) -> bool {
-    //     let path = url.path();
-    //     if path.len() < self.path.len() {
-    //         path.starts_with(&self.path.as_str()[0..(self.path.len() - 1)])
-    //     } else {
-    //         path.starts_with(self.path.as_str())
-    //     }
-    // }
-
-    // #[inline]
-    // fn replace_path(&self, url: &Uri) -> Uri {
-    //     let p = {
-    //         let path = url.path();
-    //         let path = if path.ends_with("/") {
-    //             &path[self.path.len()..]
-    //         } else {
-    //             &path[(self.path.len() - 1)..]
-    //         };
-    //         if path.is_empty() {
-    //             "/"
-    //         } else {
-    //             path
-    //         }
-    //     };
-    //     let port = url.port();
-    //     let mut o = Vec::default();
-    //     if let Some(s) = url.scheme_str() {
-    //         o.push(s);
-    //     }
-    //     if let Some(s) = url.authority() {
-    //         o.push(s.as_str());
-    //     }
-    //     if let Some(p) = &port {
-    //         o.extend(&[":", p.as_str()]);
-    //     }
-
-    //     o.push(&p);
-    //     if let Some(s) = url.query() {
-    //         o.extend(&["?", s]);
-    //     }
-
-    //     Uri::from_str(&o.join("")).unwrap()
-    // }
-
-    // #[inline]
-    // fn ensure_mount(&self, req: &mut Request<B>, path: String) {
-    //     if req.extensions().get::<MountPath>().is_none() {
-    //         req.extensions_mut().insert(MountPath(Vec::default()));
-    //     }
-    //     req.extensions_mut()
-    //         .get_mut::<MountPath>()
-    //         .unwrap()
-    //         .0
-    //         .push(path);
-    // }
-}
-
 impl<T, B> Service<Request<B>> for MountTask<T, B>
 where
     T: Service<Request<B>> + Clone,

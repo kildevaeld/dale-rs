@@ -5,14 +5,14 @@ use crate::{
     Body,
 };
 
-mod privatet {
+mod sealed {
     use http::Request;
 
     pub trait Sealed {}
     impl<B> Sealed for Request<B> {}
 }
 
-pub trait RequestExt<B> {
+pub trait RequestExt<B>: sealed::Sealed {
     fn bytes(&mut self) -> ToBytes<B>
     where
         B: Body;

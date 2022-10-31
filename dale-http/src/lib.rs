@@ -44,7 +44,3 @@ pub mod reply {
 
 #[cfg(feature = "headers")]
 pub use headers;
-
-//
-mod taker;
-pub use self::taker::*;

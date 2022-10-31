@@ -1,3 +1,5 @@
+#![no_std]
+
 use dale::{Middleware, Service};
 
 pub trait Extensions {
@@ -134,16 +136,14 @@ where
 
 pub mod filters {
 
+    use crate::{Extensible, Extensions};
     use core::{convert::Infallible, future::Future, marker::PhantomData};
-    use std::{
+    use core::{
         pin::Pin,
         task::{Context, Poll},
     };
-
     use dale::{Outcome, Service};
     use pin_project_lite::pin_project;
-
-    use crate::{Extensible, Extensions};
 
     pub struct ExtensionService<T>(PhantomData<T>);
 

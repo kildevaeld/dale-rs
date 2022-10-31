@@ -1,11 +1,14 @@
-use dale::filters::One;
-use dale::{Outcome, Service};
+use dale::{filters::One, Outcome, Service};
 use dale_runtime::fs::*;
 use futures_core::Future;
 use mime::Mime;
 use relative_path::RelativePath;
-use std::fs::OpenOptions;
-use std::{fs::Metadata, io, marker::PhantomData, path::PathBuf};
+use std::{
+    fs::{Metadata, OpenOptions},
+    io,
+    marker::PhantomData,
+    path::PathBuf,
+};
 
 use crate::node::FileTypeMask;
 use crate::Node;

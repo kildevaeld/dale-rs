@@ -1,5 +1,4 @@
-use crate::body::Body;
-use crate::modifier::Modifier;
+use crate::{body::Body, modifier::Modifier};
 use http::{header, Response, StatusCode, Uri};
 
 impl<B: Body> Modifier<Response<B>> for Vec<u8> {

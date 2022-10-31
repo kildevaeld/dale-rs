@@ -1,6 +1,5 @@
 use dale_http::router::Params;
-use dale_http::{filters, reply, Method, Result};
-use dale_http::{prelude::*, router::Router, Request};
+use dale_http::{router::Router, Request};
 use hyper::{Body, Server};
 
 #[tokio::main(flavor = "current_thread")]
@@ -10,7 +9,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     let mut router = Router::new();
 
     router
-        .get("/", |req: Request<_>| async move { "Hello, World!" })?
+        .get("/", |_: Request<_>| async move { "Hello, World!" })?
         .get("/upper/:name", |req: Request<Body>| async move {
             let params = req
                 .extensions()
