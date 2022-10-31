@@ -1,7 +1,7 @@
 mod body;
 pub mod common;
 #[cfg(feature = "serde")]
-mod encoder;
+pub mod encoder;
 pub mod error;
 pub mod filters;
 #[cfg(feature = "fs")]
@@ -24,7 +24,7 @@ pub use mime;
 
 pub use self::{
     body::Body,
-    error::Result,
+    error::{Error, KnownError, Result},
     mount::{mount, Mount},
     types::Reply,
 };
