@@ -5,9 +5,17 @@ use std::{rc::Rc, sync::Arc};
 
 use crate::Service;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SharedService<T> {
     service: Arc<T>,
+}
+
+impl<T> Clone for SharedService<T> {
+    fn clone(&self) -> Self {
+        SharedService {
+            service: self.service.clone(),
+        }
+    }
 }
 
 impl<T> SharedService<T> {
