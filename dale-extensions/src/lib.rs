@@ -7,6 +7,7 @@ pub trait Extensions {
     fn get<T: Send + Sync + 'static>(&self) -> Option<&T>;
     fn get_mut<T: Send + Sync + 'static>(&mut self) -> Option<&mut T>;
     fn remove<T: Send + Sync + 'static>(&mut self) -> Option<T>;
+    fn contains<T: Send + Sync + 'static>(&self) -> bool;
 }
 
 // #[cfg(feature = "extensions")]
@@ -45,6 +46,10 @@ impl Extensions for extensions::concurrent::Extensions {
     fn remove<T: Send + Sync + 'static>(&mut self) -> Option<T> {
         self.remove()
     }
+
+    fn contains<T: Send + Sync + 'static>(&self) -> bool {
+        self.get::<T>().is_some()
+    }
 }
 
 #[cfg(feature = "http")]
@@ -63,6 +68,10 @@ impl Extensions for http::Extensions {
 
     fn remove<T: Send + Sync + 'static>(&mut self) -> Option<T> {
         self.remove()
+    }
+
+    fn contains<T: Send + Sync + 'static>(&self) -> bool {
+        self.get::<T>().is_some()
     }
 }
 
