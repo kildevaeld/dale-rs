@@ -5,6 +5,8 @@ extern crate alloc;
 
 mod macros;
 
+#[cfg(feature = "alloc")]
+mod impls;
 mod into_outcome;
 mod middleware;
 mod outcome;
@@ -30,3 +32,6 @@ pub use either::Either;
 
 #[cfg(feature = "derive")]
 pub use dale_derive::*;
+
+#[cfg(feature = "alloc")]
+pub use impls::*;

@@ -12,3 +12,11 @@ where
         (self)(args)
     }
 }
+
+#[cfg(feature = "alloc")]
+pub mod alloc {
+    #[cfg(not(feature = "std"))]
+    pub use alloc::{sync::Arc, vec::Vec};
+    #[cfg(feature = "std")]
+    pub use std::{sync::Arc, vec::Vec};
+}
