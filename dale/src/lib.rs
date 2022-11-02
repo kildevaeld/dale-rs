@@ -8,6 +8,7 @@ mod macros;
 #[cfg(feature = "alloc")]
 mod impls;
 mod into_outcome;
+mod into_service;
 mod middleware;
 mod outcome;
 mod service;
@@ -21,7 +22,9 @@ pub mod filters;
 #[cfg(feature = "alloc")]
 pub mod boxed;
 
-pub use self::{into_outcome::*, middleware::*, outcome::*, service::*, service_ext::*};
+pub use self::{
+    into_outcome::*, into_service::*, middleware::*, outcome::*, service::*, service_ext::*,
+};
 
 #[cfg(feature = "alloc")]
 pub use self::boxed::BoxService;
