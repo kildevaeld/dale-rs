@@ -26,6 +26,7 @@ pub use self::{
     body::Body,
     error::{Error, KnownError, Result},
     mount::{mount, Mount},
+    request_ext::*,
     types::Reply,
 };
 

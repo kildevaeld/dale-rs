@@ -1,5 +1,4 @@
-use dale_http::router::Params;
-use dale_http::{router::Router, Request};
+use dale_http::{router::Router, Request, RequestExt};
 use hyper::{Body, Server};
 
 #[tokio::main(flavor = "current_thread")]
@@ -11,12 +10,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     router
         .get("/", |_: Request<_>| async move { "Hello, World!" })?
         .get("/upper/:name", |req: Request<Body>| async move {
-            let params = req
-                .extensions()
-                .get::<Params>()
-                .unwrap()
-                .get("name")
-                .unwrap();
+            let params = req.params().get("name").unwrap();
 
             params.to_uppercase()
         })?;

@@ -20,6 +20,9 @@ pub trait RequestExt<B>: sealed::Sealed {
     fn text<'a>(&'a mut self) -> ToText<B>
     where
         B: Body;
+
+    #[cfg(feature = "router")]
+    fn params(&self) -> &crate::router::Params;
 }
 
 impl<B> RequestExt<B> for Request<B> {
@@ -36,7 +39,12 @@ impl<B> RequestExt<B> for Request<B> {
         B: Body,
     {
         let body = std::mem::replace(self.body_mut(), B::empty());
-
         ToText::new(body)
+    }
+
+    #[cfg(feature = "router")]
+    fn params(&self) -> &crate::router::Params {
+        static PARAMS: crate::router::Params = crate::router::Params::new();
+        self.extensions().get().unwrap_or(&PARAMS)
     }
 }

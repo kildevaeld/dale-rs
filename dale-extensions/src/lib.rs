@@ -10,25 +10,6 @@ pub trait Extensions {
     fn contains<T: Send + Sync + 'static>(&self) -> bool;
 }
 
-// #[cfg(feature = "extensions")]
-// impl Extensions for extensions::Extensions {
-//     fn insert<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
-//         self.insert(val)
-//     }
-
-//     fn get<T: Send + Sync + 'static>(&self) -> Option<&T> {
-//         self.get()
-//     }
-
-//     fn get_mut<T: Send + Sync + 'static>(&mut self) -> Option<&mut T> {
-//         self.get_mut()
-//     }
-
-//     fn remove<T: Send + Sync + 'static>(&mut self) -> Option<T> {
-//         self.remove()
-//     }
-// }
-
 #[cfg(feature = "extensions")]
 impl Extensions for extensions::concurrent::Extensions {
     fn insert<T: Send + Sync + 'static>(&mut self, val: T) -> Option<T> {
