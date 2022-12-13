@@ -8,7 +8,7 @@ pub type BoxError = Box<dyn StdError + Send + Sync>;
 
 #[derive(Debug)]
 pub struct Error {
-    error: BoxError,
+    pub(crate) error: BoxError,
 }
 
 impl Error {
@@ -24,7 +24,7 @@ impl Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "dale error: {}", self.error)
+        write!(f, "http error: {}", self.error)
     }
 }
 
