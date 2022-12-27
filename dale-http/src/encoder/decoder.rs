@@ -9,7 +9,11 @@ use futures_core::{ready, Future};
 use pin_project_lite::pin_project;
 use serde::de::DeserializeOwned;
 
-use crate::{common::Aggregate, error::Error, Body};
+use crate::{
+    common::Aggregate,
+    error::{BoxError, Error},
+    Body, KnownError,
+};
 
 pub trait Decodable {}
 
@@ -53,6 +57,7 @@ where
     B: Body,
     B::Error: Into<Error>,
     D: Decoder,
+    D::Error: Into<BoxError>,
     S: DeserializeOwned,
 {
     type Output = Result<S, Error>;
@@ -63,10 +68,7 @@ where
         match ready!(this.body.poll(cx)) {
             Ok(ret) => match D::decode(ret) {
                 Ok(ret) => Poll::Ready(Ok(ret)),
-                Err(err) => {
-                    // Poll::Ready(Err(err))
-                    panic!("to decoded: {}", err)
-                }
+                Err(err) => Poll::Ready(Err(KnownError::Decode(err.into()).into())),
             },
             Err(err) => Poll::Ready(Err(err.into())),
         }

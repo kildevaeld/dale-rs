@@ -96,6 +96,8 @@ pub enum KnownError {
     InvalidHeader(String),
     MissingHeader(String),
     Utf8(std::str::Utf8Error),
+    #[cfg(feature = "serde")]
+    Decode(BoxError),
 }
 
 impl fmt::Display for KnownError {
@@ -107,7 +109,23 @@ impl fmt::Display for KnownError {
             KnownError::PayloadTooLarge => write!(f, "payload too large"),
             KnownError::UnsupportMediaType => write!(f, "unsupported media type"),
             KnownError::Utf8(err) => write!(f, "encoding error: {}", err),
+            #[cfg(feature = "serde")]
+            KnownError::Decode(err) => write!(f, "decode error: {}", err),
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<serde_urlencoded::de::Error> for KnownError {
+    fn from(value: serde_urlencoded::de::Error) -> Self {
+        KnownError::Decode(Box::new(value))
+    }
+}
+
+#[cfg(feature = "json")]
+impl From<serde_json::Error> for KnownError {
+    fn from(value: serde_json::Error) -> Self {
+        KnownError::Decode(Box::new(value))
     }
 }
 

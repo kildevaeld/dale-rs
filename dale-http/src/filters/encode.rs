@@ -1,7 +1,7 @@
 use crate::{
     body::BodyExt,
     encoder::Decoder,
-    error::{Error, KnownError},
+    error::{BoxError, Error, KnownError},
     filters, Body,
 };
 use dale::{Outcome, Service, ServiceExt};
@@ -18,6 +18,7 @@ pub fn decode<D: Decoder, S: DeserializeOwned, B>() -> impl Service<
 where
     B: Body + Send + 'static,
     B::Error: Into<Error> + Send,
+    D::Error: Into<BoxError>,
 {
     is_content_type::<D, B>()
         .and(filters::body())
