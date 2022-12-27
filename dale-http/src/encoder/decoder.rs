@@ -63,9 +63,9 @@ where
         match ready!(this.body.poll(cx)) {
             Ok(ret) => match D::decode(ret) {
                 Ok(ret) => Poll::Ready(Ok(ret)),
-                Err(_err) => {
+                Err(err) => {
                     // Poll::Ready(Err(err))
-                    todo!()
+                    panic!("to decoded: {}", err)
                 }
             },
             Err(err) => Poll::Ready(Err(err.into())),
