@@ -10,7 +10,7 @@ pub fn ext<S: Clone + Send + Sync + 'static, B: Send + 'static>() -> impl Servic
     Future = impl Future + Send,
 > + Copy {
     |req: Request<B>| async move {
-        let ext = req.extensions().get().map(|m: &S| m.clone());
+        let ext = req.extensions().get().cloned();
         Outcome::Success((req, (ext,)))
     }
 }

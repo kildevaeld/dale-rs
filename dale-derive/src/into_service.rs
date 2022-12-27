@@ -32,5 +32,5 @@ pub fn implement(ast: &syn::DeriveInput) -> TokenStream {
         }
     };
 
-    TokenStream::from(out)
+    out
 }

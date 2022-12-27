@@ -19,7 +19,7 @@ impl<T, U> And<T, U> {
     }
 }
 
-impl<'a, T, U, R> Service<R> for And<T, U>
+impl<T, U, R> Service<R> for And<T, U>
 where
     // R: Send + Sync,
     T: Service<R>,

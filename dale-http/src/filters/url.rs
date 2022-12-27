@@ -24,7 +24,7 @@ pub fn path<P: ToString, B: Send + 'static>(
 > + Clone {
     let p = path.to_string();
     move |req: Request<B>| {
-        let eql = req.uri().path() == &p;
+        let eql = req.uri().path() == p;
         async move {
             if eql {
                 Outcome::Success((req, ()))

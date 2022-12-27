@@ -129,7 +129,7 @@ impl<N> IntoOutcome<N> for () {
 }
 
 #[cfg(any(feature = "alloc", feature = "std"))]
-impl<'a, N, T> IntoOutcome<N> for Vec<T> {
+impl<N, T> IntoOutcome<N> for Vec<T> {
     type Failure = Infallible;
     type Success = Vec<T>;
 
@@ -139,7 +139,7 @@ impl<'a, N, T> IntoOutcome<N> for Vec<T> {
 }
 
 #[cfg(any(feature = "alloc", feature = "std"))]
-impl<'a, N, K, V> IntoOutcome<N> for BTreeMap<K, V> {
+impl<N, K, V> IntoOutcome<N> for BTreeMap<K, V> {
     type Failure = Infallible;
     type Success = BTreeMap<K, V>;
 
@@ -149,7 +149,7 @@ impl<'a, N, K, V> IntoOutcome<N> for BTreeMap<K, V> {
 }
 
 #[cfg(feature = "std")]
-impl<'a, N, K, V> IntoOutcome<N> for HashMap<K, V> {
+impl<N, K, V> IntoOutcome<N> for HashMap<K, V> {
     type Failure = Infallible;
     type Success = HashMap<K, V>;
 
@@ -163,7 +163,7 @@ mod _http {
     use super::{Infallible, IntoOutcome, Outcome};
     use http::{Response, StatusCode};
 
-    impl<'a, N, T> IntoOutcome<N> for Response<T> {
+    impl<N, T> IntoOutcome<N> for Response<T> {
         type Failure = Infallible;
         type Success = Response<T>;
 

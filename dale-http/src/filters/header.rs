@@ -43,7 +43,7 @@ pub fn header_str<S: AsHeaderName + Clone + Send + Sync + 'static, B: Send + 'st
         let name = name.clone();
 
         async move {
-            match req.headers().get(name.clone()).map(|h| h.clone()) {
+            match req.headers().get(name.clone()).cloned() {
                 Some(s) => Outcome::Success((req, (s,))),
                 None => Outcome::Failure(Error::from(KnownError::InvalidHeader(
                     name.as_str().to_owned(),
@@ -106,7 +106,7 @@ pub fn optional_str<S: AsHeaderName + Clone + Send + Sync + 'static, B: Send + '
     dale::filters::state(name)
         .then(|req: (Request<B>, (S,))| async move {
             let (req, (name,)) = req;
-            let header = req.headers().get(name).map(|h| h.clone());
+            let header = req.headers().get(name).cloned();
             Result::<_, Error>::Ok((req, (header,)))
         })
         .err_into()

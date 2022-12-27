@@ -47,6 +47,6 @@ where
             Err(err) => return Poll::Ready(Err(KnownError::Utf8(err.utf8_error()).into())),
         };
 
-        return Poll::Ready(Ok(text));
+        Poll::Ready(Ok(text))
     }
 }

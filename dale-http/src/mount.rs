@@ -22,7 +22,7 @@ fn normalize_path(mut path: String) -> String {
     if path.is_empty() {
         path.push('/');
     }
-    if path.chars().nth(0).unwrap() != '/' {
+    if !path.starts_with('/') {
         path.insert(0, '/');
     }
     let len = path.len();
@@ -227,7 +227,7 @@ fn starts_with(p: &str, url: &Uri) -> bool {
 fn replace_path(path: &str, url: &Uri) -> Uri {
     let p = {
         let path2 = url.path();
-        let path = if path2.ends_with("/") {
+        let path = if path2.ends_with('/') {
             &path2[path.len()..]
         } else {
             &path2[(path.len() - 1)..]
@@ -247,12 +247,12 @@ fn replace_path(path: &str, url: &Uri) -> Uri {
         o.push(s.as_str());
     }
     if let Some(p) = &port {
-        o.extend(&[":", p.as_str()]);
+        o.extend([":", p.as_str()]);
     }
 
-    o.push(&p);
+    o.push(p);
     if let Some(s) = url.query() {
-        o.extend(&["?", s]);
+        o.extend(["?", s]);
     }
 
     Uri::from_str(&o.join("")).unwrap()

@@ -52,7 +52,7 @@ impl<'a, I, O, E> Service<I> for BoxService<'a, I, O, E> {
     type Future = BoxFuture<'a, Outcome<O, E, I>>;
 
     fn call(&self, req: I) -> Self::Future {
-        (&**self).call(req)
+        (**self).call(req)
     }
 }
 
@@ -89,6 +89,6 @@ impl<'a, I, O, E> Service<I> for LocalBoxService<'a, I, O, E> {
     type Future = LocalBoxFuture<'a, Outcome<O, E, I>>;
 
     fn call(&self, req: I) -> Self::Future {
-        (&**self).call(req)
+        (**self).call(req)
     }
 }

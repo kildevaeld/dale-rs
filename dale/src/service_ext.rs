@@ -137,6 +137,7 @@ pub trait ServiceExt<T>: Service<T> {
     // Boxing
 
     #[cfg(any(feature = "alloc", feature = "std"))]
+    #[allow(clippy::type_complexity)]
     fn boxed(
         self,
     ) -> BoxService<
@@ -153,6 +154,7 @@ pub trait ServiceExt<T>: Service<T> {
     }
 
     #[cfg(any(feature = "alloc", feature = "std"))]
+    #[allow(clippy::type_complexity)]
     fn boxed_local(
         self,
     ) -> LocalBoxService<

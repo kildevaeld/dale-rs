@@ -1,3 +1,5 @@
+#![allow(opaque_hidden_inferred_bound)]
+
 mod body;
 pub mod common;
 #[cfg(feature = "serde")]
