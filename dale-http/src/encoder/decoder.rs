@@ -11,9 +11,7 @@ use serde::de::DeserializeOwned;
 
 use crate::{common::Aggregate, error::Error, Body};
 
-pub trait Decodable {
-    
-}
+pub trait Decodable {}
 
 pub trait Decoder {
     type Error;
