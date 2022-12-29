@@ -140,8 +140,8 @@ fn file_stream<F: AsyncRead + AsyncSeek + std::marker::Unpin + Send>(
                 }
                 reserve_at_least(&mut buf, buf_size);
 
-                let mut read_buf = &mut buf; //ReadBuf::new(&mut buf);
-                let size = match ready!(Pin::new(&mut f).poll_read(cx, &mut read_buf)) {
+                let read_buf = &mut buf; //ReadBuf::new(&mut buf);
+                let size = match ready!(Pin::new(&mut f).poll_read(cx, read_buf)) {
                     Ok(s) => s,
                     Err(err) => {
                         tracing::debug!("file read error: {}", err);

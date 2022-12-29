@@ -75,7 +75,7 @@ where
                         .set(headers::ContentLength(meta.len())));
                 }
 
-                Result::<_, Error>::Ok(file_conditional(node, mime, meta, options)?)
+                file_conditional(node, mime, meta, options)
             },
         )
         .err_into()
@@ -92,7 +92,7 @@ where
 
     let path = path.into();
 
-    let service = dale_fs::FileSystem::<Tokio>::root_with(path.clone(), FileTypeMask::REGULAR)
+    dale_fs::FileSystem::<Tokio>::root_with(path.clone(), FileTypeMask::REGULAR)
         .and(file_options())
         .then(move |(_, (node, options))| {
             let root = path.clone();
@@ -105,9 +105,7 @@ where
                         o.read(true);
                         let file = Tokio::open(path, o).await?;
 
-                        let ret = file_conditional(file, meta.mime, meta.meta, options);
-
-                        ret
+                        file_conditional(file, meta.mime, meta.meta, options)
                     }
                     _ => {
                         todo!();
@@ -115,7 +113,5 @@ where
                 }
             }
         })
-        .err_into();
-
-    service
+        .err_into()
 }
