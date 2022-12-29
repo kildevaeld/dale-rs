@@ -8,7 +8,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     let service =
         |req: Request<hyper::Body>| async move { dale_http::reply::json("Hello, World!") };
 
-    let service = dale_http::hyper::make(service);
+    let service = dale_http::hyper::make(service.or(|req| async move { "Hello, World " }));
 
     Server::bind(&addr).serve(service).await?;
 

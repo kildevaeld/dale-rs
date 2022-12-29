@@ -12,10 +12,6 @@ use headers::ContentType;
 use http::{Request, StatusCode};
 use serde::Serialize;
 
-pub fn encode<E: Encoder, S: Serialize>(data: S) -> Encoded<S, E> {
-    Encoded(data, false, PhantomData)
-}
-
 pub struct Encoded<S, E>(pub(crate) S, pub(crate) bool, pub(crate) PhantomData<E>);
 
 impl<S, E> Encoded<S, E> {
@@ -77,6 +73,10 @@ where
             Err(err) => Outcome::Failure(err),
         }
     }
+}
+
+pub fn encode<E: Encoder, S: Serialize>(data: S) -> Encoded<S, E> {
+    Encoded(data, false, PhantomData)
 }
 
 #[cfg(feature = "json")]

@@ -116,16 +116,22 @@ impl fmt::Display for KnownError {
 }
 
 #[cfg(feature = "serde")]
-impl From<serde_urlencoded::de::Error> for KnownError {
-    fn from(value: serde_urlencoded::de::Error) -> Self {
-        KnownError::Decode(Box::new(value))
+impl From<crate::encoder::DecodeError> for KnownError {
+    fn from(value: crate::encoder::DecodeError) -> Self {
+        use crate::encoder::DecodeErrorKind;
+        match value.kind {
+            DecodeErrorKind::Syntax(err) => KnownError::Decode(err),
+            DecodeErrorKind::UnsupportedMediaType => KnownError::UnsupportMediaType,
+            DecodeErrorKind::Transport(err) => KnownError::Internal(err),
+        }
     }
 }
 
-#[cfg(feature = "json")]
-impl From<serde_json::Error> for KnownError {
-    fn from(value: serde_json::Error) -> Self {
-        KnownError::Decode(Box::new(value))
+#[cfg(feature = "serde")]
+impl From<crate::encoder::DecodeError> for Error {
+    fn from(value: crate::encoder::DecodeError) -> Self {
+        let err: KnownError = value.into();
+        Error::new(err)
     }
 }
 
