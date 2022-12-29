@@ -135,4 +135,11 @@ impl From<crate::encoder::DecodeError> for Error {
     }
 }
 
+#[cfg(feature = "serde")]
+impl From<crate::encoder::EncodeError> for Error {
+    fn from(value: crate::encoder::EncodeError) -> Self {
+        Error::new(KnownError::Internal(value.into()))
+    }
+}
+
 impl StdError for KnownError {}

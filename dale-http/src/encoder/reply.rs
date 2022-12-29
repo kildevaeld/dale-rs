@@ -1,4 +1,4 @@
-use super::Encoder;
+use super::{EncodeError, Encoder};
 use crate::{
     modifier::{Set, With},
     types::Reply,
@@ -55,7 +55,7 @@ where
 {
     type Success = Response<B>;
 
-    type Failure = E::Error;
+    type Failure = EncodeError;
 
     fn into_outcome(self) -> dale::Outcome<Self::Success, Self::Failure, Request<B>> {
         let ret = if self.1 {
@@ -70,7 +70,7 @@ where
                     .set(ret)
                     .set(ContentType::from(E::MIME)),
             ),
-            Err(err) => Outcome::Failure(err),
+            Err(err) => Outcome::Failure(err.into()),
         }
     }
 }
