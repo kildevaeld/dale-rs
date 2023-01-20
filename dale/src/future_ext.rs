@@ -4,7 +4,7 @@ use pin_project_lite::pin_project;
 
 use crate::{IntoOutcome, Outcome};
 
-pub trait FutureExt: Future {
+pub trait DaleFutureExt: Future {
     fn into_outcome<N>(self) -> OutcomeFuture<Self, N>
     where
         Self: Sized,
@@ -17,7 +17,7 @@ pub trait FutureExt: Future {
     }
 }
 
-impl<F> FutureExt for F where F: Future {}
+impl<F> DaleFutureExt for F where F: Future {}
 
 pin_project! {
     pub struct OutcomeFuture<F, N> {
@@ -27,6 +27,9 @@ pin_project! {
     }
 
 }
+
+unsafe impl<F: Send, N> Send for OutcomeFuture<F, N> {}
+
 impl<F, N> Future for OutcomeFuture<F, N>
 where
     F: Future,
