@@ -12,6 +12,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     let service = dale_http::fs::root(Path::new("."))
         .map(reply::json)
         .wrap(dale_http::Mount::new("/statics"))
+        .or(dale_http::fs::dir(".").wrap(dale_http::Mount::new("/statics2")))
         .or(any().map(|| "Hello"));
 
     let service = dale_http::hyper::make(service);
