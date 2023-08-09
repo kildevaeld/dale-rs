@@ -1,4 +1,4 @@
-#[cfg(feature = "alloc")]
+#[cfg(any(feature = "alloc"))]
 use crate::boxed::{Box, BoxService, BoxedService, LocalBoxService, LocalBoxedService};
 use crate::{
     combinators::{ErrInto, MapErr, Or, RequireService, Then, Unify, Unpack, UnpackOne},
@@ -136,7 +136,8 @@ pub trait ServiceExt<T>: Service<T> {
 
     // Boxing
 
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::type_complexity)]
     fn boxed(
         self,
     ) -> BoxService<
@@ -152,7 +153,8 @@ pub trait ServiceExt<T>: Service<T> {
         Box::new(BoxedService::new(self))
     }
 
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
+    #[allow(clippy::type_complexity)]
     fn boxed_local(
         self,
     ) -> LocalBoxService<

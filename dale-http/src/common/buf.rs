@@ -7,6 +7,12 @@ pub struct BufList<T> {
     bufs: VecDeque<T>,
 }
 
+impl<T: Buf> Default for BufList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Buf> BufList<T> {
     pub fn new() -> BufList<T> {
         BufList {

@@ -40,6 +40,7 @@ pub struct Dir {
 }
 
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum Node {
     File(File),
     Dir(Dir),

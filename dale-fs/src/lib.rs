@@ -1,3 +1,5 @@
+#![allow(opaque_hidden_inferred_bound)]
+
 mod fs;
 mod node;
 

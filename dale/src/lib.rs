@@ -16,6 +16,9 @@ mod service_ext;
 
 mod types;
 
+mod future_ext;
+pub use future_ext::*;
+
 pub mod combinators;
 pub mod filters;
 

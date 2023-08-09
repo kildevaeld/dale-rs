@@ -1,4 +1,4 @@
-use super::Encoder;
+use super::{EncodeError, Encoder};
 use crate::{
     modifier::{Set, With},
     types::Reply,
@@ -11,10 +11,6 @@ use dale::IntoOutcome;
 use headers::ContentType;
 use http::{Request, StatusCode};
 use serde::Serialize;
-
-pub fn encode<E: Encoder, S: Serialize>(data: S) -> Encoded<S, E> {
-    Encoded(data, false, PhantomData)
-}
 
 pub struct Encoded<S, E>(pub(crate) S, pub(crate) bool, pub(crate) PhantomData<E>);
 
@@ -59,7 +55,7 @@ where
 {
     type Success = Response<B>;
 
-    type Failure = E::Error;
+    type Failure = EncodeError;
 
     fn into_outcome(self) -> dale::Outcome<Self::Success, Self::Failure, Request<B>> {
         let ret = if self.1 {
@@ -74,9 +70,13 @@ where
                     .set(ret)
                     .set(ContentType::from(E::MIME)),
             ),
-            Err(err) => Outcome::Failure(err),
+            Err(err) => Outcome::Failure(err.into()),
         }
     }
+}
+
+pub fn encode<E: Encoder, S: Serialize>(data: S) -> Encoded<S, E> {
+    Encoded(data, false, PhantomData)
 }
 
 #[cfg(feature = "json")]

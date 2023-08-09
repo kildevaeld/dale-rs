@@ -76,7 +76,9 @@ impl<S: ToString + Clone, B: Body> Service<Request<B>> for Text<S> {
     }
 }
 
+#[allow(clippy::declare_interior_mutable_const)]
 const MIME_TEXT: HeaderValue = HeaderValue::from_static("text/plain");
+#[allow(clippy::declare_interior_mutable_const)]
 const MIME_HTML: HeaderValue = HeaderValue::from_static("text/html");
 
 impl<S: ToString, B: Body> Reply<B> for Text<S> {

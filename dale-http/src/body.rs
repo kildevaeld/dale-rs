@@ -9,7 +9,7 @@ use crate::common::{ToBytes, ToText};
 #[cfg(feature = "json")]
 use crate::encoder::Json;
 #[cfg(feature = "serde")]
-use crate::encoder::{Decoder, ToDecoded};
+use crate::encoder::{Decoder, Form, ToDecoded};
 #[cfg(feature = "serde")]
 use serde::de::DeserializeOwned;
 
@@ -41,6 +41,11 @@ pub trait BodyExt: Body {
 
     #[cfg(feature = "json")]
     fn json<S: DeserializeOwned>(self) -> ToDecoded<Json, S, Self> {
+        self.decode()
+    }
+
+    #[cfg(feature = "serde")]
+    fn form<S: DeserializeOwned>(self) -> ToDecoded<Form, S, Self> {
         self.decode()
     }
 

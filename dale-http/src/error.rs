@@ -8,7 +8,7 @@ pub type BoxError = Box<dyn StdError + Send + Sync>;
 
 #[derive(Debug)]
 pub struct Error {
-    error: BoxError,
+    pub(crate) error: BoxError,
 }
 
 impl Error {
@@ -24,7 +24,7 @@ impl Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "dale error: {}", self.error)
+        write!(f, "http error: {}", self.error)
     }
 }
 
@@ -96,6 +96,8 @@ pub enum KnownError {
     InvalidHeader(String),
     MissingHeader(String),
     Utf8(std::str::Utf8Error),
+    #[cfg(feature = "serde")]
+    Decode(BoxError),
 }
 
 impl fmt::Display for KnownError {
@@ -107,7 +109,36 @@ impl fmt::Display for KnownError {
             KnownError::PayloadTooLarge => write!(f, "payload too large"),
             KnownError::UnsupportMediaType => write!(f, "unsupported media type"),
             KnownError::Utf8(err) => write!(f, "encoding error: {}", err),
+            #[cfg(feature = "serde")]
+            KnownError::Decode(err) => write!(f, "decode error: {}", err),
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<crate::encoder::DecodeError> for KnownError {
+    fn from(value: crate::encoder::DecodeError) -> Self {
+        use crate::encoder::DecodeErrorKind;
+        match value.kind {
+            DecodeErrorKind::Syntax(err) => KnownError::Decode(err),
+            DecodeErrorKind::UnsupportedMediaType => KnownError::UnsupportMediaType,
+            DecodeErrorKind::Transport(err) => KnownError::Internal(err),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<crate::encoder::DecodeError> for Error {
+    fn from(value: crate::encoder::DecodeError) -> Self {
+        let err: KnownError = value.into();
+        Error::new(err)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl From<crate::encoder::EncodeError> for Error {
+    fn from(value: crate::encoder::EncodeError) -> Self {
+        Error::new(KnownError::Internal(value.into()))
     }
 }
 

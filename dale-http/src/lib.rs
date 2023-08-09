@@ -1,3 +1,5 @@
+#![allow(opaque_hidden_inferred_bound)]
+
 mod body;
 pub mod common;
 #[cfg(feature = "serde")]
@@ -26,6 +28,7 @@ pub use self::{
     body::Body,
     error::{Error, KnownError, Result},
     mount::{mount, Mount},
+    request_ext::*,
     types::Reply,
 };
 

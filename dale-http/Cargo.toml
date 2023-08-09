@@ -5,7 +5,7 @@ version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default = []
+default = [  ]
 
 full = ["headers", "router", "fs", "serde", "json", "qs"]
 
@@ -94,3 +94,10 @@ required-features = ["hyper", "router"]
 name = "static"
 path = "examples/static.rs"
 required-features = ["hyper", "fs", "json"]
+
+
+
+[[example]]
+name = "encoder"
+path = "examples/encoder.rs"
+required-features = ["hyper",  "json"]

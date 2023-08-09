@@ -247,12 +247,12 @@ fn replace_path(path: &str, url: &Uri) -> Uri {
         o.push(s.as_str());
     }
     if let Some(p) = &port {
-        o.extend(&[":", p.as_str()]);
+        o.extend([":", p.as_str()]);
     }
 
     o.push(p);
     if let Some(s) = url.query() {
-        o.extend(&["?", s]);
+        o.extend(["?", s]);
     }
 
     Uri::from_str(&o.join("")).unwrap()
