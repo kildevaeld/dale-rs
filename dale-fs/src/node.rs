@@ -65,7 +65,7 @@ pub async fn read_path<F: FS>(
     path: &Path,
     filetypes: FileTypeMask,
 ) -> Result<Node, io::Error> {
-    let metadata = F::metadata(&path).await?;
+    let metadata = F::metadata(path).await?;
 
     let filetype = metadata.file_type().into();
     if !filetypes.contains(filetype) {
@@ -73,7 +73,7 @@ pub async fn read_path<F: FS>(
     }
 
     let node = if metadata.is_dir() {
-        let stream = F::read_dir(&path).await?;
+        let stream = F::read_dir(path).await?;
         pin_mut!(stream);
 
         let mut out = Vec::default();

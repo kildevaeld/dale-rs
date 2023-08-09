@@ -20,8 +20,8 @@ impl Executor for Tokio {
         R: Send + 'static,
     {
         Box::pin(async move {
-            let ret = tokio::task::spawn_blocking(ret).await;
-            ret
+            
+            tokio::task::spawn_blocking(ret).await
         })
     }
 

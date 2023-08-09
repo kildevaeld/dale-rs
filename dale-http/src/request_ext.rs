@@ -17,7 +17,7 @@ pub trait RequestExt<B>: sealed::Sealed {
     where
         B: Body;
 
-    fn text<'a>(&'a mut self) -> ToText<B>
+    fn text(&mut self) -> ToText<B>
     where
         B: Body;
 }

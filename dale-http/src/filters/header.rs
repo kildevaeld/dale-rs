@@ -43,7 +43,7 @@ pub fn header_str<S: AsHeaderName + Clone + Send + Sync + 'static, B: Send + 'st
         let name = name.clone();
 
         async move {
-            match req.headers().get(name.clone()).map(|h| h.clone()) {
+            match req.headers().get(name.clone()).cloned() {
                 Some(s) => Outcome::Success((req, (s,))),
                 None => Outcome::Failure(Error::from(KnownError::InvalidHeader(
                     name.as_str().to_owned(),
@@ -106,7 +106,7 @@ pub fn optional_str<S: AsHeaderName + Clone + Send + Sync + 'static, B: Send + '
     dale::filters::state(name)
         .then(|req: (Request<B>, (S,))| async move {
             let (req, (name,)) = req;
-            let header = req.headers().get(name).map(|h| h.clone());
+            let header = req.headers().get(name).cloned();
             Result::<_, Error>::Ok((req, (header,)))
         })
         .err_into()
@@ -152,12 +152,12 @@ pub fn exact_ignore_case<B: Send + 'static>(
             None => return Outcome::Failure(KnownError::MissingHeader(name.to_owned()).into()),
         };
 
-        let ret = if val.as_bytes().eq_ignore_ascii_case(value.as_bytes()) {
+        
+
+        if val.as_bytes().eq_ignore_ascii_case(value.as_bytes()) {
             Outcome::Success((req, ()))
         } else {
             Outcome::Failure(KnownError::InvalidHeader(name.to_owned()).into())
-        };
-
-        ret
+        }
     }
 }
