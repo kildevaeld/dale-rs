@@ -7,4 +7,5 @@ members = [
   "dale-fs",
   "dale-runtime",
   "dale-extensions",
+  "dale-http-cookies",
 ]

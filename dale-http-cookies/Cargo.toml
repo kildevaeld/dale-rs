@@ -1,0 +1,12 @@
+[package]
+name = "dale-http-cookies"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dale = { path = "../dale" }
+dale-http = { path = "../dale-http" }
+cookie = { version = "0.17", features = ["secure"] }
+pin-project-lite = { version = "0.2" }
