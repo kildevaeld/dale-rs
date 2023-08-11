@@ -292,7 +292,18 @@ dependencies = [
  "cookie",
  "dale",
  "dale-http",
+ "hyper",
  "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
+name = "dale-http-session"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "dale",
+ "dale-http",
 ]
 
 [[package]]

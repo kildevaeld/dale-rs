@@ -6,11 +6,15 @@ use cookie;
 pub struct CookieJar(pub(crate) Arc<Mutex<cookie::CookieJar>>);
 
 impl CookieJar {
-    pub fn add(&mut self, cookie: cookie::Cookie<'static>) {
+    pub fn add(&self, cookie: cookie::Cookie<'static>) {
         self.lock().add(cookie)
     }
 
-    pub fn lock<'a>(&'a self) -> CookieJarLock<'a> {
+    pub fn contains(&self, name: &str) -> bool {
+        self.lock().get(name).is_some()
+    }
+
+    pub fn lock(&self) -> CookieJarLock<'_> {
         CookieJarLock(self.0.lock().unwrap())
     }
 }
@@ -32,5 +36,9 @@ impl<'a> CookieJarLock<'a> {
 
     pub fn add(&mut self, cookie: cookie::Cookie<'static>) {
         self.0.add(cookie);
+    }
+
+    pub fn contains(&self, name: &str) -> bool {
+        self.0.get(name).is_some()
     }
 }

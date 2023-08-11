@@ -8,4 +8,5 @@ members = [
   "dale-runtime",
   "dale-extensions",
   "dale-http-cookies",
+  "dale-http-session",
 ]

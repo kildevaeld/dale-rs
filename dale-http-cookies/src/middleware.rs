@@ -17,7 +17,7 @@ pub struct Cookies;
 impl<T, B> Middleware<Request<B>, T> for Cookies
 where
     T: Service<Request<B>> + Clone,
-    T::Future: std::marker::Unpin,
+    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -35,7 +35,7 @@ pub struct CookiesService<T> {
 impl<T, B> Service<Request<B>> for CookiesService<T>
 where
     T: Service<Request<B>> + Clone,
-    T::Future: std::marker::Unpin,
+    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -82,7 +82,7 @@ pin_project_lite::pin_project! {
 impl<T, B> Future for CookieServiceFuture<T, B>
 where
     T: Service<Request<B>>,
-    T::Future: std::marker::Unpin,
+    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -114,16 +114,21 @@ where
                         dale::Outcome::Success(ret) => {
                             let cookie_jar = cookie_jar.lock();
 
-                            let cookie_string = cookie_jar
-                                .delta()
-                                .map(|m| m.to_string())
-                                .collect::<Vec<_>>()
-                                .join(";");
+                            // let cookie_string = cookie_jar
+                            //     .delta()
+                            //     .map(|m| m.to_string())
+                            //     .collect::<Vec<_>>()
+                            //     .join(";");
 
+                            //println!("cookie {cookie_string}");
                             let mut resp = ret.into_response();
 
-                            resp.headers_mut()
-                                .insert("cookie", HeaderValue::from_str(&cookie_string).unwrap());
+                            for cookie in cookie_jar.delta() {
+                                resp.headers_mut().insert(
+                                    "Set-Cookie",
+                                    HeaderValue::from_str(&cookie.to_string()).unwrap(),
+                                );
+                            }
 
                             Outcome::Success(resp)
                         }
