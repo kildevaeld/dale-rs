@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
 use dale_http::Request;
+use keyval::{Cbor, KeyVal, Store, TtlStore};
 
 use crate::{
     session::{Session, SessionId, SessionIdExtractor},
-    store::Store,
+    store::SessionData,
 };
 
 struct ManagerInner<B> {
-    store: Box<dyn Store + Send + Sync>,
+    store: KeyVal<Box<dyn TtlStore>>,
     extractor: Box<dyn SessionIdExtractor<B> + Send + Sync>,
 }
 
@@ -35,6 +36,6 @@ impl<B> Manager<B> {
     }
 
     pub(crate) async fn load(&self, session: &SessionId) {
-        self.0.store.load(session).await;
+        let result: Cbor<SessionData> = self.0.store.get(session.as_bytes()).await.unwrap();
     }
 }

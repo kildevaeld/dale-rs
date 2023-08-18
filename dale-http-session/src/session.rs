@@ -9,6 +9,12 @@ const SESSION_KEY: &str = "sess_id";
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SessionId(Arc<str>);
 
+impl SessionId {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
 impl<'a> From<&'a str> for SessionId {
     fn from(value: &'a str) -> Self {
         SessionId(Arc::from(value))

@@ -14,3 +14,5 @@ serde = { version = "1", features = ["derive"] }
 odu-value = { git = "https://github.com/kildevaeld/odu-rs", features = [
     "serde",
 ] }
+
+keyval = { git = "https://github.com/kildevaeld/keyval-rs" }
