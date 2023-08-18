@@ -21,7 +21,7 @@ mod types;
 pub mod hyper;
 
 pub use bytes::{self, Bytes};
-pub use http::{HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri};
+pub use http::{self, HeaderMap, HeaderValue, Method, Request, Response, StatusCode, Uri};
 pub use mime;
 
 pub use self::{

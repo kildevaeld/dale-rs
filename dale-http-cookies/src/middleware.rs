@@ -1,13 +1,13 @@
 use std::{
     future::Future,
-    pin::Pin,
-    sync::{Arc, Mutex},
+    sync::Arc,
     task::{ready, Poll},
 };
 
 use core::marker::PhantomData;
 use dale::{IntoOutcome, Middleware, Service};
-use dale_http::{HeaderValue, Outcome, Reply, Request};
+use dale_http::{prelude::Set, HeaderValue, Outcome, Reply, Request};
+use parking_lot::Mutex;
 
 use crate::cookie_jar::CookieJar;
 
@@ -17,7 +17,6 @@ pub struct Cookies;
 impl<T, B> Middleware<Request<B>, T> for Cookies
 where
     T: Service<Request<B>> + Clone,
-    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -35,7 +34,6 @@ pub struct CookiesService<T> {
 impl<T, B> Service<Request<B>> for CookiesService<T>
 where
     T: Service<Request<B>> + Clone,
-    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -82,7 +80,6 @@ pin_project_lite::pin_project! {
 impl<T, B> Future for CookieServiceFuture<T, B>
 where
     T: Service<Request<B>>,
-    // T::Future: std::marker::Unpin,
     <T::Output as IntoOutcome<Request<B>>>::Success: Reply<B>,
     <T::Output as IntoOutcome<Request<B>>>::Failure: Into<dale_http::Error>,
 {
@@ -112,25 +109,7 @@ where
                     let ret = match ready!(future.poll(cx)).into_outcome() {
                         dale::Outcome::Next(next) => Outcome::Next(next),
                         dale::Outcome::Success(ret) => {
-                            let cookie_jar = cookie_jar.lock();
-
-                            // let cookie_string = cookie_jar
-                            //     .delta()
-                            //     .map(|m| m.to_string())
-                            //     .collect::<Vec<_>>()
-                            //     .join(";");
-
-                            //println!("cookie {cookie_string}");
-                            let mut resp = ret.into_response();
-
-                            for cookie in cookie_jar.delta() {
-                                resp.headers_mut().insert(
-                                    "Set-Cookie",
-                                    HeaderValue::from_str(&cookie.to_string()).unwrap(),
-                                );
-                            }
-
-                            Outcome::Success(resp)
+                            Outcome::Success(ret.into_response().set(&*cookie_jar))
                         }
                         dale::Outcome::Failure(err) => Outcome::Failure(err.into()),
                     };
@@ -138,7 +117,6 @@ where
                     this.state.set(CookieServiceFutureState::Done);
 
                     return Poll::Ready(ret);
-                    //
                 }
                 StateProj::Done => {
                     panic!("poll after done")
@@ -149,17 +127,23 @@ where
 }
 
 fn parse_cookies<B>(req: &Request<B>) -> CookieJar {
-    let cookie_header = req.headers().get("cookie");
+    let cookie_header = req.headers().get(dale_http::http::header::COOKIE);
 
     let mut jar = cookie::CookieJar::new();
 
     if let Some(header) = cookie_header {
         let header_str = header.to_str().unwrap();
-
         let cookies = cookie::Cookie::split_parse(header_str);
 
         for cookie in cookies {
-            let cookie = cookie.unwrap();
+            let cookie = match cookie {
+                Ok(cookie) => cookie,
+                Err(err) => {
+                    tracing::info!(err = ?err, "could not parse cookie");
+                    continue;
+                }
+            };
+
             jar.add_original(cookie.into_owned());
         }
     }

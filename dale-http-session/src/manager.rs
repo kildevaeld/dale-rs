@@ -8,8 +8,8 @@ use crate::{
 };
 
 struct ManagerInner<B> {
-    store: Box<dyn Store>,
-    extractor: Box<dyn SessionIdExtractor<B>>,
+    store: Box<dyn Store + Send + Sync>,
+    extractor: Box<dyn SessionIdExtractor<B> + Send + Sync>,
 }
 
 pub struct Manager<B>(Arc<ManagerInner<B>>);

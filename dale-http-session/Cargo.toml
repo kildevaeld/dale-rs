@@ -9,3 +9,8 @@ edition = "2021"
 dale = { path = "../dale" }
 dale-http = { path = "../dale-http" }
 async-trait = { version = "0.1" }
+uuid = { version = "1", features = ["v4"] }
+serde = { version = "1", features = ["derive"] }
+odu-value = { git = "https://github.com/kildevaeld/odu-rs", features = [
+    "serde",
+] }

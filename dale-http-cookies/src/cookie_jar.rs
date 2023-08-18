@@ -1,6 +1,9 @@
-use std::sync::{Arc, Mutex, MutexGuard};
-
-use cookie;
+use dale_http::{
+    prelude::{Modifier, Set},
+    Body, HeaderValue, Response,
+};
+use parking_lot::{Mutex, MutexGuard};
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct CookieJar(pub(crate) Arc<Mutex<cookie::CookieJar>>);
@@ -15,7 +18,7 @@ impl CookieJar {
     }
 
     pub fn lock(&self) -> CookieJarLock<'_> {
-        CookieJarLock(self.0.lock().unwrap())
+        CookieJarLock(self.0.lock())
     }
 }
 
@@ -40,5 +43,24 @@ impl<'a> CookieJarLock<'a> {
 
     pub fn contains(&self, name: &str) -> bool {
         self.0.get(name).is_some()
+    }
+}
+
+impl<B> Modifier<Response<B>> for CookieJar {
+    fn modify(self, resp: &mut Response<B>) {
+        resp.set_mut(&self);
+    }
+}
+
+impl<'a, B> Modifier<Response<B>> for &'a CookieJar {
+    fn modify(self, resp: &mut Response<B>) {
+        let lock = self.lock();
+
+        for cookie in lock.delta() {
+            resp.headers_mut().insert(
+                dale_http::http::header::SET_COOKIE,
+                HeaderValue::from_str(&cookie.to_string()).unwrap(),
+            );
+        }
     }
 }

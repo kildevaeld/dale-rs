@@ -10,7 +10,8 @@ dale = { path = "../dale" }
 dale-http = { path = "../dale-http" }
 cookie = { version = "0.17", features = ["secure"] }
 pin-project-lite = { version = "0.2" }
-
+tracing = { version = "0.1" }
+parking_lot = "0.12"
 
 [dev-dependencies]
 hyper = { version = "0.14", features = ["server", "http1", "runtime"] }
