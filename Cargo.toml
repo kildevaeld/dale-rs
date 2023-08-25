@@ -9,4 +9,6 @@ members = [
   "dale-extensions",
   "dale-http-cookies",
   "dale-http-session",
+  "dale-http-negotiate",
+  "dale-http-rest",
 ]
