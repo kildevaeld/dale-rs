@@ -1,6 +1,9 @@
-mod filters;
-mod list;
+mod controller;
+pub mod filters;
+mod handlers;
 mod model;
+
+pub use self::{handlers::*, model::*};
 // use std::future::Future;
 
 // use async_trait::async_trait;
