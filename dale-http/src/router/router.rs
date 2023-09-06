@@ -72,16 +72,20 @@ impl<B> Router<B> {
         Ok(self)
     }
 
-    pub fn mount<'a, P>(&mut self, path: P, router: Router<B>) -> Result<&mut Self, P::Error>
+    pub fn mount<'a, 'b, P, I>(&mut self, path: P, router: I) -> Result<&mut Self, P::Error>
     where
         P: AsSegments<'a> + 'a,
+        I: IntoIterator<Item = router::Route<'b, Route<B>>>,
     {
-        self.router.mount(path, router.router)?;
+        self.router.mount(path, router)?;
         Ok(self)
     }
 
-    pub fn extend(&mut self, router: Router<B>) -> &mut Self {
-        self.router.extend(router.router);
+    pub fn extend<'a, I>(&mut self, router: I) -> &mut Self
+    where
+        I: IntoIterator<Item = router::Route<'a, Route<B>>>,
+    {
+        self.router.extend(router);
         self
     }
 
