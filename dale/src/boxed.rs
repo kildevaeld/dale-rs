@@ -1,4 +1,4 @@
-use crate::{IntoOutcome, Outcome, Service};
+use crate::{IntoOutcome, Middleware, Outcome, Service};
 use core::{future::Future, pin::Pin};
 
 #[cfg(not(feature = "std"))]
@@ -90,5 +90,57 @@ impl<'a, I, O, E> Service<I> for LocalBoxService<'a, I, O, E> {
 
     fn call(&self, req: I) -> Self::Future {
         (**self).call(req)
+    }
+}
+
+pub type BoxMiddleware<'a, I, O, E, S> =
+    Box<dyn Middleware<I, S, Service = BoxService<'a, I, O, E>> + Send + Sync>;
+
+pub struct BoxedMiddleware<M>(pub M);
+
+impl<'a, I, S, M> Middleware<I, S> for BoxedMiddleware<M>
+where
+    M: Middleware<I, S>,
+    S: Service<I>,
+    M::Service: Sync + Send + 'static,
+    <M::Service as Service<I>>::Future: Send + 'static,
+{
+    type Service = BoxService<
+        'static,
+        I,
+        <<M::Service as Service<I>>::Output as IntoOutcome<I>>::Success,
+        <<M::Service as Service<I>>::Output as IntoOutcome<I>>::Failure,
+    >;
+
+    fn wrap(&self, service: S) -> Self::Service {
+        Box::new(BoxedService {
+            service: self.0.wrap(service),
+        })
+    }
+}
+
+pub type LocalBoxMiddleware<'a, I, O, E, S> =
+    Box<dyn Middleware<I, S, Service = LocalBoxService<'a, I, O, E>>>;
+
+pub struct LocalBoxedMiddleware<M>(pub M);
+
+impl<'a, I, S, M> Middleware<I, S> for LocalBoxedMiddleware<M>
+where
+    M: Middleware<I, S>,
+    S: Service<I> + 'static,
+    M::Service: 'static,
+    <M::Service as Service<I>>::Future: 'static,
+{
+    type Service = LocalBoxService<
+        'static,
+        I,
+        <<M::Service as Service<I>>::Output as IntoOutcome<I>>::Success,
+        <<M::Service as Service<I>>::Output as IntoOutcome<I>>::Failure,
+    >;
+
+    fn wrap(&self, service: S) -> Self::Service {
+        Box::new(LocalBoxedService {
+            service: self.0.wrap(service),
+        })
     }
 }

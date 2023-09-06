@@ -10,6 +10,7 @@ mod impls;
 mod into_outcome;
 mod into_service;
 mod middleware;
+mod middleware_ext;
 mod outcome;
 mod service;
 mod service_ext;

@@ -1,7 +1,11 @@
 use crate::into_outcome::IntoOutcome;
 use crate::service::Service;
+use crate::{ServiceFailure, ServiceSuccess};
 use core::future::Future;
 use core::marker::PhantomData;
+
+pub type MiddlewareSuccess<I, M, S> = ServiceSuccess<I, <M as Middleware<I, S>>::Service>;
+pub type MiddlewareFailure<I, M, S> = ServiceFailure<I, <M as Middleware<I, S>>::Service>;
 
 pub trait Middleware<R, T: Service<R>> {
     type Service: Service<R>;

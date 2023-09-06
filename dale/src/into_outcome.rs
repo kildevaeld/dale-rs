@@ -2,6 +2,10 @@ use core::marker::PhantomData;
 
 use crate::outcome::Outcome;
 
+pub type Success<N, I> = <I as IntoOutcome<N>>::Success;
+
+pub type Failure<N, I> = <I as IntoOutcome<N>>::Failure;
+
 pub trait IntoOutcome<N> {
     type Success;
     type Failure;
