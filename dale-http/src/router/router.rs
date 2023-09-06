@@ -100,6 +100,14 @@ impl<B> Router<B> {
     );
 }
 
+impl<B> IntoIterator for Router<B> {
+    type IntoIter = router::router::IntoIter<Route<B>>;
+    type Item = router::Route<'static, Route<B>>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.router.into_iter()
+    }
+}
+
 #[derive(Debug)]
 pub struct RouterService<B> {
     router: Arc<Router<B>>,
