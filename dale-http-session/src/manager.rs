@@ -26,7 +26,7 @@ impl<B> Manager<B> {
         let id = if let Some(id) = self.0.extractor.extract(req) {
             id
         } else {
-            "test_id".into()
+            SessionId::default()
         };
 
         Session {
