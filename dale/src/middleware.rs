@@ -93,3 +93,16 @@ impl<R, F: Clone, T: Clone> Clone for MiddlewareFnService<R, F, T> {
 }
 
 impl<R, F: Copy, T: Copy> Copy for MiddlewareFnService<R, F, T> {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Passthrough;
+
+impl<R, S> Middleware<R, S> for Passthrough
+where
+    S: Service<R>,
+{
+    type Service = S;
+    fn wrap(&self, service: S) -> Self::Service {
+        service
+    }
+}

@@ -65,6 +65,17 @@ impl<S, E, N> Outcome<S, E, N> {
         }
     }
 
+    pub fn next_then<F>(self, func: F) -> Outcome<S, E, N>
+    where
+        F: FnOnce(N) -> S,
+    {
+        match self {
+            Outcome::Success(success) => Outcome::Success(success),
+            Outcome::Failure(err) => Outcome::Failure(err),
+            Outcome::Next(n) => Outcome::Success(func(n)),
+        }
+    }
+
     pub fn result(self) -> Result<Option<S>, E> {
         match self {
             Outcome::Failure(err) => Err(err),

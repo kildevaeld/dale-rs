@@ -1,4 +1,4 @@
-use dale::ServiceExt;
+use dale::{IntoService, ServiceExt};
 use dale_http::{router::Router, Request, RequestExt};
 use hyper::{Body, Server};
 
@@ -11,7 +11,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     let mut router = Router::new();
 
     router
-        .get("/", |_: Request<_>| async move { "Hello, World!" })?
+        .get("/", |_| async move { "Hello, World!" })?
         .get("/upper/:name", |req: Request<Body>| async move {
             let params = req.params().get("name").unwrap();
 
@@ -19,7 +19,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         })?
         .get("/simple", filters::url().map(|u| "Hello, Simple!"))?;
 
-    let service = dale_http::hyper::make(router.into_service());
+    let service = dale_http::hyper::make(router.into_service()?);
 
     Server::bind(&addr).serve(service).await?;
 

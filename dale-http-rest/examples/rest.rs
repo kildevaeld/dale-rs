@@ -3,6 +3,7 @@ use std::convert::Infallible;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use dale::IntoService;
 use dale_http::router::Router;
 use dale_http::{filters, reply, Body};
 use dale_http::{prelude::*, Request};
@@ -95,7 +96,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         Retrieve::new(model.clone()).service().map(reply::json),
     )?;
 
-    let service = dale_http::hyper::make(router.into_service());
+    let service = dale_http::hyper::make(router.into_service()?);
 
     Server::bind(&addr).serve(service).await?;
 

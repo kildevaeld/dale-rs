@@ -1,9 +1,9 @@
 use super::{route::Route, Params};
 use crate::{error::Error, Body, Outcome, Reply};
-use dale::{boxed::BoxFuture, IntoOutcome, Service, ServiceExt};
+use dale::{boxed::BoxFuture, IntoOutcome, IntoService, Service, ServiceExt};
 use http::{Method, Request, StatusCode};
 use router::{AsSegments, Router as LibRouter};
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 #[derive(Debug)]
 pub struct Router<B> {
@@ -59,7 +59,6 @@ impl<B> Router<B> {
             .then(
                 |resp: <S::Output as IntoOutcome<Request<B>>>::Success| async move {
                     let resp = resp.into_response();
-
                     Result::<_, Error>::Ok(resp)
                 },
             )
@@ -89,12 +88,6 @@ impl<B> Router<B> {
         self
     }
 
-    pub fn into_service(self) -> RouterService<B> {
-        RouterService {
-            router: Arc::new(self),
-        }
-    }
-
     impl_method!(
         get => GET,
         post => POST,
@@ -102,6 +95,17 @@ impl<B> Router<B> {
         patch => PATCH,
         delete => DELETE
     );
+}
+
+impl<B: Body + Send + Sync + 'static> IntoService<Request<B>> for Router<B> {
+    type Error = Infallible;
+    type Service = RouterService<B>;
+
+    fn into_service(self) -> Result<Self::Service, Self::Error> {
+        Ok(RouterService {
+            router: self.into(),
+        })
+    }
 }
 
 impl<B> IntoIterator for Router<B> {

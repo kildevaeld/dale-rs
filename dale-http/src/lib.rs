@@ -15,6 +15,7 @@ pub mod reply_impl;
 mod request_ext;
 #[cfg(feature = "router")]
 pub mod router;
+mod service_ext;
 mod types;
 
 #[cfg(feature = "hyper")]
@@ -35,8 +36,8 @@ pub use self::{
 pub type Outcome<B> = dale::Outcome<Response<B>, error::Error, Request<B>>;
 
 pub mod prelude {
-    pub use super::{body::BodyExt, modifier::*, request_ext::*};
-    pub use dale::{IntoOutcomeExt, ServiceExt};
+    pub use super::{body::BodyExt, modifier::*, request_ext::*, service_ext::HttpServiceExt};
+    pub use dale::{IntoOutcomeExt, MiddlewareExt, ServiceExt};
 }
 
 pub mod reply {

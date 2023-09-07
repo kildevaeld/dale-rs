@@ -46,11 +46,7 @@ impl<S: IntoOutcome<N>, N> IntoOutcome<N> for Option<S> {
 
     fn into_outcome(self) -> Outcome<Self::Success, Self::Failure, N> {
         match self {
-            Some(ret) => match ret.into_outcome() {
-                Outcome::Failure(err) => Outcome::Failure(err),
-                Outcome::Next(_) => Outcome::Success(None),
-                Outcome::Success(ret) => Outcome::Success(Some(ret)),
-            },
+            Some(ret) => ret.into_outcome().map(Some).next_then(|_| None),
             None => Outcome::Success(None),
         }
     }
@@ -67,16 +63,11 @@ where
 
     fn into_outcome(self) -> crate::outcome::Outcome<Self::Success, Self::Failure, T> {
         match self {
-            Either::Left(left) => match left.into_outcome() {
-                Outcome::Success(success) => Outcome::Success(Either::Left(success)),
-                Outcome::Failure(err) => Outcome::Failure(Either::Left(err)),
-                Outcome::Next(n) => Outcome::Next(n),
-            },
-            Either::Right(right) => match right.into_outcome() {
-                Outcome::Success(success) => Outcome::Success(Either::Right(success)),
-                Outcome::Failure(err) => Outcome::Failure(Either::Right(err)),
-                Outcome::Next(n) => Outcome::Next(n),
-            },
+            Either::Left(left) => left.into_outcome().map(Either::Left).map_err(Either::Left),
+            Either::Right(right) => right
+                .into_outcome()
+                .map(Either::Right)
+                .map_err(Either::Right),
         }
     }
 }
