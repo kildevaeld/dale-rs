@@ -9,7 +9,7 @@ use dale_http::{filters, reply, Body};
 use dale_http::{prelude::*, Request};
 use hyper::Server;
 
-use dale_http_rest::{Create, Data, List, Model, Retrieve};
+use dale_http_rest::{Create, Data, List, Model, RestRouter, Retrieve, RouteSet};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -83,18 +83,22 @@ impl Model for ModelImpl {
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addr = ([127, 0, 0, 1], 3000).into();
 
-    let mut router = Router::new();
-
     let model = ModelImpl::default();
 
-    router.get("/", List::new(model.clone()).service().map(reply::json))?;
+    let mut router = RestRouter::default();
 
-    router.post("/", Create::new(model.clone()).service().map(reply::json))?;
+    RouteSet::new("todos", model.clone())
+        .all()
+        .attach(&mut router);
 
-    router.get(
-        "/:id",
-        Retrieve::new(model.clone()).service().map(reply::json),
-    )?;
+    // router.get("/", List::new(model.clone()).service().map(reply::json))?;
+
+    // router.post("/", Create::new(model.clone()).service().map(reply::json))?;
+
+    // router.get(
+    //     "/:id",
+    //     Retrieve::new(model.clone()).service().map(reply::json),
+    // )?;
 
     let service = dale_http::hyper::make(router.into_service()?);
 

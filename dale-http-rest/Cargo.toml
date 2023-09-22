@@ -10,6 +10,7 @@ dale-http = { path = "../dale-http", features = ["router"] }
 dale = { path = "../dale" }
 
 async-trait = { version = "0.1" }
+serde = { version = "1", features = ["derive"] }
 
 
 [dev-dependencies]
