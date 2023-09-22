@@ -19,6 +19,22 @@ impl<S, B> HttpServiceExt<B> for S where S: Service<Request<B>> {}
 #[derive(Debug, Clone, Copy)]
 pub struct IntoResponseService<S>(S);
 
+impl<S, B> Service<Request<B>> for IntoResponseService<S>
+where
+    S: Service<Request<B>>,
+    ServiceFailure<Request<B>, S>: Into<Error>,
+    ServiceSuccess<Request<B>, S>: Reply<B>,
+{
+    type Future = IntoResponseFuture<S, B>;
+    type Output = Outcome<B>;
+    fn call(&self, req: Request<B>) -> Self::Future {
+        IntoResponseFuture {
+            future: self.0.call(req),
+            _body: PhantomData,
+        }
+    }
+}
+
 pin_project_lite::pin_project! {
     pub struct IntoResponseFuture<S, B> where S: Service<Request<B>> {
         #[pin]

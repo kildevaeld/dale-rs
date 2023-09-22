@@ -1,7 +1,11 @@
 use std::fmt;
 
-use crate::error::Error;
-use dale::BoxService;
+use crate::{error::Error, service_ext::HttpServiceExt, Reply};
+use dale::{
+    BoxService, IntoOutcomeExt, Middleware, MiddlewareFnService, Service, ServiceExt,
+    ServiceFailure, ServiceSuccess,
+};
+use futures_core::Future;
 use http::{Method, Request, Response};
 
 pub struct Route<B> {
@@ -23,5 +27,22 @@ impl<B> Route<B> {
         service: BoxService<'static, Request<B>, Response<B>, Error>,
     ) -> Route<B> {
         Route { service, method }
+    }
+
+    pub fn wrap<M>(mut self, middleware: M) -> Route<B>
+    where
+        B: Send + 'static,
+        M: Middleware<Request<B>, BoxService<'static, Request<B>, Response<B>, Error>>,
+        M::Service: Service<Request<B>> + Send + Sync + 'static,
+        <M::Service as Service<Request<B>>>::Future: Send,
+        ServiceSuccess<Request<B>, M::Service>: Reply<B> + Send,
+        ServiceFailure<Request<B>, M::Service>: Into<Error>,
+    {
+        self.service = middleware
+            .wrap(self.service)
+            .err_into()
+            .into_response()
+            .boxed();
+        self
     }
 }
