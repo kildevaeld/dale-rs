@@ -37,7 +37,7 @@ where
     M: Model + 'static + Send + Clone,
     M::Query: Send + Clone,
     M::Error: std::error::Error + Send + Sync + 'static,
-    <M::Query as Query>::Error: Send + Sync + 'static,
+    <M::Query as Query<M>>::Error: Send + Sync + 'static,
 {
     type Output = Outcome<(Request<B>, One<Vec<M::Output>>), dale_http::Error, Request<B>>;
 
@@ -47,9 +47,8 @@ where
         let model = self.model.clone();
         let default = self.default_query.clone();
         Box::pin(async move {
-            let query = fail!(
-                M::Query::from_request(&req, default.as_ref()).map_err(dale_http::Error::new)
-            );
+            let query = fail!(M::Query::from_request(&model, &req, default.as_ref())
+                .map_err(dale_http::Error::new));
             let future = model.list(&query);
             let ret = fail!(future.await.map_err(dale_http::Error::new));
             success!((req, (ret,)))
@@ -120,7 +119,7 @@ where
     M: Model + 'static + Send + Clone,
     M::Query: Send + Clone,
     M::Error: std::error::Error + Send + Sync + 'static,
-    <M::Query as Query>::Error: Send + Sync + 'static,
+    <M::Query as Query<M>>::Error: Send + Sync + 'static,
 {
     type Output = Outcome<(Request<B>, One<M::Output>), dale_http::Error, Request<B>>;
 
@@ -252,7 +251,7 @@ impl<M: Model> RouteSet<M> {
         M::Output: serde::ser::Serialize + Send,
         M::Query: Send + Sync + Clone,
         M::Error: std::error::Error + Send + Sync + 'static,
-        <M::Query as Query>::Error: Send + Sync + 'static,
+        <M::Query as Query<M>>::Error: Send + Sync + 'static,
         M::Data: Send,
         <M::Data as Data>::Error: Send + Sync + 'static,
     {

@@ -7,27 +7,27 @@ use crate::Data;
 
 use super::model::{Model, Query};
 
-pub fn query<M, B: Send>(
-    default: Option<M::Query>,
-) -> impl Service<
-    Request<B>,
-    Output = Outcome<(Request<B>, One<M::Query>), dale_http::Error, Request<B>>,
-    Future = impl Future + Send,
-> + Clone
-where
-    M: Model,
-    M::Query: Send + Clone,
-    <M::Query as Query>::Error: Send + Sync + 'static,
-{
-    move |req: Request<B>| {
-        let ret = match M::Query::from_request(&req, default.as_ref()) {
-            Ok(ret) => Ok((req, (ret,))).into_outcome(),
-            Err(err) => Err(dale_http::Error::new(err)).into_outcome(),
-        };
+// pub fn query<M, B: Send>(
+//     default: Option<M::Query>,
+// ) -> impl Service<
+//     Request<B>,
+//     Output = Outcome<(Request<B>, One<M::Query>), dale_http::Error, Request<B>>,
+//     Future = impl Future + Send,
+// > + Clone
+// where
+//     M: Model,
+//     M::Query: Send + Clone,
+//     <M::Query as Query<M>>::Error: Send + Sync + 'static,
+// {
+//     move |req: Request<B>| {
+//         let ret = match M::Query::from_request(&req, default.as_ref()) {
+//             Ok(ret) => Ok((req, (ret,))).into_outcome(),
+//             Err(err) => Err(dale_http::Error::new(err)).into_outcome(),
+//         };
 
-        async move { ret }
-    }
-}
+//         async move { ret }
+//     }
+// }
 
 pub fn id<B: Send>(
     path: impl ToString,

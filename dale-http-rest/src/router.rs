@@ -47,7 +47,7 @@ impl<B: Send> RestRouter<B> {
         M::Output: serde::ser::Serialize + Send,
         M::Query: Send + Sync + Clone,
         M::Error: std::error::Error + Send + Sync + 'static,
-        <M::Query as Query>::Error: Send + Sync + 'static,
+        <M::Query as Query<M>>::Error: Send + Sync + 'static,
         M::Data: Send,
         <M::Data as Data>::Error: Send + Sync + 'static,
     {

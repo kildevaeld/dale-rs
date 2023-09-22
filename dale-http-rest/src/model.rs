@@ -4,14 +4,22 @@ use async_trait::async_trait;
 use dale::{filters::One, IntoOutcome, Outcome, Service, ServiceExt};
 use dale_http::{Body, Request, RequestExt};
 
-pub trait Query: Sized {
+pub trait Query<M>: Sized {
     type Error: std::error::Error;
-    fn from_request<B>(req: &Request<B>, default: Option<&Self>) -> Result<Self, Self::Error>;
+    fn from_request<B>(
+        model: &M,
+        req: &Request<B>,
+        default: Option<&Self>,
+    ) -> Result<Self, Self::Error>;
 }
 
-impl Query for () {
+impl<M> Query<M> for () {
     type Error = Infallible;
-    fn from_request<B>(req: &Request<B>, default: Option<&Self>) -> Result<Self, Self::Error> {
+    fn from_request<B>(
+        model: &M,
+        req: &Request<B>,
+        default: Option<&Self>,
+    ) -> Result<Self, Self::Error> {
         Ok(())
     }
 }
@@ -25,8 +33,8 @@ pub trait Data: Sized {
 }
 
 #[async_trait]
-pub trait Model {
-    type Query: Query;
+pub trait Model: Sized {
+    type Query: Query<Self>;
     type Data: Data;
     type Error;
     type Output;
