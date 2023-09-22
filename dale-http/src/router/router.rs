@@ -1,4 +1,4 @@
-use super::{route::Route, routing::Routing, Params};
+use super::{decorated::DecoratedRouter, route::Route, routing::Routing, Params};
 use crate::{error::Error, Body, Outcome, Reply};
 use dale::{
     boxed::BoxFuture, BoxService, IntoOutcome, IntoService, Middleware, Service, ServiceExt,
@@ -19,32 +19,16 @@ impl<B> Default for Router<B> {
     }
 }
 
-macro_rules! impl_method {
-    ($($name: ident => $method: ident),*) => {
-        $(
-            pub fn $name<'a, P, S>(&mut self, path: P, service: S) -> Result<&mut Self, P::Error>
-            where
-                P: AsSegments<'a> + 'a,
-                B: 'static,
-                S: Service<Request<B>> + Send + Sync + 'static,
-                S::Future: Send,
-                <S::Output as IntoOutcome<Request<B>>>::Success: Reply<B> + Send,
-                <S::Output as IntoOutcome<Request<B>>>::Failure: Into<Error>,
-            {
-                self.register(Method::$method, path, service)
-            }
-        )*
-    };
-}
-
 impl<B> Router<B> {
     pub fn new() -> Router<B> {
         Router {
             router: LibRouter::new(),
         }
     }
+}
 
-    pub fn register<'a, P, S>(
+impl<B> Routing<B> for Router<B> {
+    fn register<'a, P, S>(
         &mut self,
         method: Method,
         path: P,
@@ -74,7 +58,7 @@ impl<B> Router<B> {
         Ok(self)
     }
 
-    pub fn mount<'a, 'b, P, I>(&mut self, path: P, router: I) -> Result<&mut Self, P::Error>
+    fn mount<'a, 'b, P, I>(&mut self, path: P, router: I) -> Result<&mut Self, P::Error>
     where
         P: AsSegments<'a> + 'a,
         I: IntoIterator<Item = router::Route<'b, Route<B>>>,
@@ -83,7 +67,7 @@ impl<B> Router<B> {
         Ok(self)
     }
 
-    pub fn extend<'a, I>(&mut self, router: I) -> &mut Self
+    fn extend<'a, I>(&mut self, router: I) -> &mut Self
     where
         I: IntoIterator<Item = router::Route<'a, Route<B>>>,
     {
@@ -91,13 +75,18 @@ impl<B> Router<B> {
         self
     }
 
-    impl_method!(
-        get => GET,
-        post => POST,
-        put => PUT,
-        patch => PATCH,
-        delete => DELETE
-    );
+    fn wrap<M>(self, middleware: M) -> DecoratedRouter<B, M>
+    where
+        Self: Sized,
+        B: Send + 'static,
+        M: Middleware<Request<B>, BoxService<'static, Request<B>, Response<B>, Error>> + Clone,
+        M::Service: Service<Request<B>> + Send + Sync + 'static,
+        <M::Service as Service<Request<B>>>::Future: Send,
+        ServiceSuccess<Request<B>, M::Service>: Reply<B> + Send,
+        ServiceFailure<Request<B>, M::Service>: Into<Error>,
+    {
+        DecoratedRouter::new(middleware, self)
+    }
 }
 
 impl<B: Body + Send + Sync + 'static> IntoService<Request<B>> for Router<B> {

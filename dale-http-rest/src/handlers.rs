@@ -3,7 +3,6 @@ use dale::{boxed::BoxFuture, fail, filters::One, next, success, Outcome, Service
 use dale_http::{Body, Request, RequestExt};
 
 use crate::{
-    filters::{data, id, query},
     method::RestMethod,
     model::{Model, Query},
     route::RestRoute,
@@ -24,6 +23,11 @@ impl<M: Model> List<M> {
             model,
             default_query: None,
         }
+    }
+
+    pub fn default_query(mut self, query: M::Query) -> Self {
+        self.default_query = Some(query);
+        self
     }
 }
 
@@ -168,6 +172,28 @@ pub fn create<M: Model>(name: &str, model: M) -> RestRoute<String, Create<M>> {
     }
 }
 
+pub trait RestHandler<M: Model> {
+    fn attach(self, router: &mut RouteSet<M>);
+}
+
+impl<M: Model> RestHandler<M> for Create<M> {
+    fn attach(self, router: &mut RouteSet<M>) {
+        router.create = Some(self);
+    }
+}
+
+impl<M: Model> RestHandler<M> for List<M> {
+    fn attach(self, router: &mut RouteSet<M>) {
+        router.list = Some(self);
+    }
+}
+
+impl<M: Model> RestHandler<M> for Retrieve<M> {
+    fn attach(self, router: &mut RouteSet<M>) {
+        router.retrieve = Some(self);
+    }
+}
+
 pub struct RouteSet<M: Model> {
     model: M,
     name: String,
@@ -186,7 +212,16 @@ impl<M: Model + Clone> RouteSet<M> {
             list: None,
         }
     }
-    pub fn register() {}
+
+    pub fn register<H: RestHandler<M>>(&mut self, handler: H) -> &mut Self {
+        handler.attach(self);
+        self
+    }
+
+    pub fn handle<H: RestHandler<M>>(mut self, handler: H) -> Self {
+        self.register(handler);
+        self
+    }
 
     pub fn create(mut self) -> Self {
         self.create = Some(Create {

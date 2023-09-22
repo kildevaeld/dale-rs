@@ -3,18 +3,18 @@ use dale::{
 };
 use dale_http::{
     reply,
-    router::{AsSegments, IntoIter, Router},
+    router::{AsSegments, IntoIter, Router, Routing},
     Body, Request,
 };
 
-use crate::{route::RestRoute, Model, RouteSet};
+use crate::{route::RestRoute, Data, Model, Query, RouteSet};
 
 #[derive(Debug, Default)]
 pub struct RestRouter<B> {
     router: Router<B>,
 }
 
-impl<B> RestRouter<B> {
+impl<B: Send> RestRouter<B> {
     pub fn register<'a, P, S, O>(
         &mut self,
         route: RestRoute<P, S>,
@@ -39,7 +39,20 @@ impl<B> RestRouter<B> {
         Ok(self)
     }
 
-    pub fn extend<M: Model>(mut self, routes: RouteSet<M>) {}
+    pub fn extend<M: Model>(&mut self, routes: RouteSet<M>)
+    where
+        B: Body + 'static + Send,
+        B::Error: std::error::Error + Send + Sync + 'static,
+        M: Model + 'static + Send + Sync + Clone,
+        M::Output: serde::ser::Serialize + Send,
+        M::Query: Send + Sync + Clone,
+        M::Error: std::error::Error + Send + Sync + 'static,
+        <M::Query as Query>::Error: Send + Sync + 'static,
+        M::Data: Send,
+        <M::Data as Data>::Error: Send + Sync + 'static,
+    {
+        routes.attach(self);
+    }
 }
 
 impl<B> IntoIterator for RestRouter<B> {

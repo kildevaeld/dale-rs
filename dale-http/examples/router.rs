@@ -1,5 +1,8 @@
 use dale::{IntoService, ServiceExt};
-use dale_http::{router::Router, Request, RequestExt};
+use dale_http::{
+    router::{Router, Routing},
+    Request, RequestExt,
+};
 use hyper::{Body, Server};
 
 use dale_http::filters;
