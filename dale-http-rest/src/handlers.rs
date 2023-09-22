@@ -1,5 +1,4 @@
-use core::future::Future;
-use dale::{boxed::BoxFuture, fail, filters::One, next, success, Outcome, Service, ServiceExt};
+use dale::{boxed::BoxFuture, fail, filters::One, next, success, Outcome, Service};
 use dale_http::{Body, Request, RequestExt};
 
 use crate::{
@@ -9,12 +8,31 @@ use crate::{
     Data, RestRouter,
 };
 
+pub trait DefaultQuery<M: Model>: Send + Sync {
+    fn query(&self, model: &M) -> Option<M::Query>;
+}
+
+impl<M: Model> DefaultQuery<M> for () {
+    fn query(&self, _model: &M) -> Option<<M as Model>::Query> {
+        None
+    }
+}
+
+impl<F, M: Model> DefaultQuery<M> for F
+where
+    F: Fn(&M) -> M::Query + Send + Sync,
+{
+    fn query(&self, model: &M) -> Option<<M as Model>::Query> {
+        Some((self)(model))
+    }
+}
+
 pub struct List<M>
 where
     M: Model,
 {
     model: M,
-    default_query: Option<M::Query>,
+    default_query: Option<Box<dyn DefaultQuery<M>>>,
 }
 
 impl<M: Model> List<M> {
@@ -24,9 +42,14 @@ impl<M: Model> List<M> {
             default_query: None,
         }
     }
+}
 
-    pub fn default_query(mut self, query: M::Query) -> Self {
-        self.default_query = Some(query);
+impl<M: Model> List<M> {
+    pub fn default_query<F>(mut self, query: F) -> List<M>
+    where
+        F: DefaultQuery<M> + 'static,
+    {
+        self.default_query = Some(Box::new(query));
         self
     }
 }
@@ -45,7 +68,7 @@ where
 
     fn call(&self, req: Request<B>) -> Self::Future {
         let model = self.model.clone();
-        let default = self.default_query.clone();
+        let default = self.default_query.as_ref().and_then(|m| m.query(&model));
         Box::pin(async move {
             let query = fail!(M::Query::from_request(&model, &req, default.as_ref())
                 .map_err(dale_http::Error::new));
