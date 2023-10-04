@@ -62,6 +62,9 @@ pub trait RequestExt<B>: sealed::Sealed {
 
     #[cfg(feature = "router")]
     fn params(&self) -> &crate::router::Params;
+
+    #[cfg(feature = "serde")]
+    fn query_params<'de, S: serde::de::Deserialize<'de>>(&'de self) -> Result<S, serde_qs::Error>;
 }
 
 impl<B> RequestExt<B> for Request<B> {
@@ -117,5 +120,10 @@ impl<B> RequestExt<B> for Request<B> {
     fn params(&self) -> &crate::router::Params {
         static PARAMS: crate::router::Params = crate::router::Params::new();
         self.extensions().get().unwrap_or(&PARAMS)
+    }
+
+    #[cfg(feature = "serde")]
+    fn query_params<'de, S: serde::de::Deserialize<'de>>(&'de self) -> Result<S, serde_qs::Error> {
+        serde_qs::from_str(self.uri().query().unwrap_or(""))
     }
 }

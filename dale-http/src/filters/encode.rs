@@ -119,7 +119,7 @@ where
     json::<T, B>().or(form::<T, B>()).unify()
 }
 
-#[cfg(feature = "qs")]
+#[cfg(feature = "serde")]
 pub fn qs<S: DeserializeOwned + Send + 'static, B: Send + 'static>() -> impl Service<
     Request<B>,
     Future = impl Future + Send,

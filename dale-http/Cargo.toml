@@ -7,7 +7,7 @@ version = "0.1.0"
 [features]
 default = ["router"]
 
-full = ["headers", "router", "fs", "serde", "json", "qs"]
+full = ["headers", "router", "fs", "serde", "json"]
 
 headers = ["dep:headers"]
 hyper = ["dep:hyper"]
@@ -26,7 +26,6 @@ fs = [
 
 ## Serde
 json = ["dep:serde_json", "serde"]
-qs = ["dep:serde_qs"]
 serde = [
   "dep:serde",
   "dep:http-serde",
@@ -34,6 +33,7 @@ serde = [
   "dale-fs?/serde",
   "serde_urlencoded",
   "headers",
+  "dep:serde_qs",
 ]
 
 [dependencies]
